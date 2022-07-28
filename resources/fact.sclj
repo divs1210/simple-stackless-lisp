@@ -1,0 +1,9 @@
+(def fact
+  (fn [n]
+    (if (< n 2)
+      1
+      (* n (fact (- n 1))))))
+
+(println "(fact 5) =>" (fact 5))
+
+(println "(fact 50000) =>" (fact 50000))
