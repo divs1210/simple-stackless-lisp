@@ -1,7 +1,8 @@
 (ns simple-stackless-lisp.util
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk])
+  (:import clojure.lang.ExceptionInfo))
 
 (defrecord Retry [bindings])
 
@@ -28,28 +29,40 @@
         retval (gensym 'retval)]
     `(loop [~@initial-bindings]
        (let [~retval (try ~@body)]
-        (if (instance? Retry ~retval)
-          (recur ~@(->> (range bindings-count)
-                        (map (fn [i] `(nth (.bindings ~retval) ~i)))))
-          ~retval)))))
+         (if (instance? Retry ~retval)
+           (recur ~@(->> (range bindings-count)
+                         (map (fn [i] `(nth (.bindings ~retval) ~i)))))
+           ~retval)))))
 
 (defn- make-guard
-  [last-call f args]
-  (reset! last-call {:f f :args args}))
+  [guard-state f args]
+  (swap! guard-state update :stack-depth inc)
+  (when (= (:stack-depth @guard-state)
+           (:max-stack-depth @guard-state))
+    (throw (ex-info "" {:type ::max-stack-depth-reached
+                        :f f
+                        :args args}))))
 
 (defn- make-execute
-  [last-call f args]
+  [guard-state f args]
   (with-retry [f f
                args args]
     (apply f args)
-    (catch StackOverflowError _
-      (retry (:f @last-call)
-             (:args @last-call)))))
+    (catch ExceptionInfo e
+      (let [{:keys [type f args]} (ex-data e)]
+        (if (= ::max-stack-depth-reached type)
+          (do
+            (swap! guard-state assoc :stack-depth 0)
+            (retry f args))
+          (throw e))))))
 
-(defn executor []
-  (let [last-call (atom nil)]
-    {:guard (partial make-guard last-call)
-     :execute (partial make-execute last-call)}))
+(defn executor
+  [& {:keys [max-stack-depth]
+      :or {max-stack-depth 200}}]
+  (let [guard-state (atom {:stack-depth 0
+                           :max-stack-depth max-stack-depth})]
+    {:guard (partial make-guard guard-state)
+     :execute (partial make-execute guard-state)}))
 
 (defn throw+
   [& strs]
