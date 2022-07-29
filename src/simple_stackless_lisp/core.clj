@@ -2,18 +2,9 @@
   (:gen-class)
   (:refer-clojure :exclude [eval])
   (:require [clojure.edn :as edn]
+            [simple-stackless-lisp.continuations :as k]
             [simple-stackless-lisp.env :as env]
             [simple-stackless-lisp.util :as u]))
-
-(declare walk)
-
-(defn make-fn
-  [[argv body] env GUARD]
-  (fn CC [k & args]
-    (GUARD CC (cons k args))
-    (let [params (zipmap argv args)
-          fn-env (env/extend! env params)]
-      (walk body fn-env k GUARD))))
 
 (defn walk
   [exp env k GUARD]
@@ -32,62 +23,20 @@
     (seq? exp)
     (let [[op & args] exp]
       (case op
-        def
-        (let [[sym val-exp] args]
-          (recur val-exp
-                 env
-                 (fn CC [val]
-                   (GUARD CC [val])
-                   (k (env/bind! env sym val)))
-                 GUARD))
-
         fn
-        (k (make-fn args env GUARD))
+        (k (k/k-fn walk args env GUARD))
+
+        def
+        (k/k-def walk args env k GUARD)
 
         if
-        (let [[test-exp then-exp else-exp] args]
-          (recur test-exp
-                 env
-                 (fn CC [test-val]
-                   (GUARD CC [test-val])
-                   (walk (if test-val then-exp else-exp)
-                         env
-                         k
-                         GUARD))
-                 GUARD))
+        (k/k-if walk args env k GUARD)
 
         do
-        (let [args (vec args)
-              len (count args)]
-          ((fn -loop [last idx]
-             (GUARD -loop [last idx])
-             (if (< idx len)
-               (walk (args idx)
-                     env
-                     (fn CC [val]
-                       (GUARD CC [val])
-                       (-loop val (inc idx)))
-                     GUARD)
-               (k last))) nil 0))
+        (k/k-do walk args env k GUARD)
 
         ;; function call
-        (recur op
-               env
-               (fn CC [f]
-                 (GUARD CC [f])
-                 (let [arg-exps (vec args)
-                       len (count arg-exps)]
-                   ((fn -loop [args idx]
-                      (GUARD -loop [args idx])
-                      (if (< idx len)
-                        (walk (arg-exps idx)
-                              env
-                              (fn CC [arg]
-                                (GUARD CC [arg])
-                                (-loop (conj args arg) (inc idx)))
-                              GUARD)
-                        (apply f args))) [k] 0)))
-               GUARD)))
+        (k/k-call walk exp env k GUARD)))
 
     :else
     (u/throw+ "Can't evaluate: " exp)))
