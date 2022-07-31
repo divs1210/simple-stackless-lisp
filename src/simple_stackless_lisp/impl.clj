@@ -18,7 +18,7 @@
           env
           (fn CC [val]
             (GUARD CC [val])
-            (k (env/bind! env sym val)))
+            (k (env/bind! (env/top-level env) sym val)))
           GUARD)))
 
 (defn k-if

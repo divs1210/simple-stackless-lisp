@@ -40,6 +40,12 @@
     :else
     (throw+ "Symbol " symbol " is unbound!")))
 
+(defn top-level
+  [env]
+  (if (::parent env)
+    (recur (::parent env))
+    env))
+
 (defn extend!
   [env mapping]
   (let [new-env (atom mapping)]
