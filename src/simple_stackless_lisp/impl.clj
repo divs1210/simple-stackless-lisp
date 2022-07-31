@@ -21,6 +21,18 @@
             (k (env/bind! (env/top-level env) sym val)))
           GUARD)))
 
+(defn k-let
+  [walk args env k GUARD]
+  (let [[bindings body] args]
+    (if (empty? bindings)
+      (walk body env k GUARD)
+      (let [[var val-exp & remaining] bindings
+            then (fn CC [val]
+                   (GUARD CC [val])
+                   (env/bind! env var val)
+                   (k-let walk [remaining body] env k GUARD))]
+        (walk val-exp env then GUARD)))))
+
 (defn k-if
   [walk args env k GUARD]
   (let [[test-exp then-exp else-exp] args]

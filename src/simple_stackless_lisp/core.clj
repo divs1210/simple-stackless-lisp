@@ -29,6 +29,9 @@
         def
         (impl/k-def walk args env k GUARD)
 
+        let
+        (impl/k-let walk args env k GUARD)
+
         if
         (impl/k-if walk args env k GUARD)
 
