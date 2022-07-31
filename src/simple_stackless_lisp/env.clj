@@ -13,6 +13,8 @@
          'print   (->cps print)
          'println (->cps println)
 
+         'gensym  (->cps gensym)
+
          'call-cc (fn [k f]
                     (f k (fn CC [_ ret]
                            (k ret))))

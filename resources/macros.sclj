@@ -1,13 +1,20 @@
 (def and
   (macro [x y]
-    (if x y)))
+    (let [x# (gensym "x")]
+      (quote
+        (let [(unquote x#) (unquote x)]
+          (if (unquote x#)
+            (unquote y)
+            (unquote x#)))))))
 
 (def or
   (macro [x y]
-    (if x
-      x
-      (if y
-        y))))
+    (let [x# (gensym "x")]
+      (quote
+        (let [(unquote x#) (unquote x)]
+          (if (unquote x#)
+            (unquote x#)
+            (unquote y)))))))
 
 (def dbg
   (macro [exp]
