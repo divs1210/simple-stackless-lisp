@@ -4,6 +4,10 @@ Interpreter for a simple Clojure-like Lisp.
 
 Made stackless using [Lisperator's technique](https://lisperator.net/pltut/cps-evaluator/).
 
+Has first class support for continuations and macros.
+
+See [code examples](resources/).
+
 ## Example
 
 ```clojure
