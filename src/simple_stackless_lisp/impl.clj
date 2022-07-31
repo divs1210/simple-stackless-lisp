@@ -27,6 +27,7 @@
     (if (empty? bindings)
       (walk body env k GUARD)
       (let [[var val-exp & remaining] bindings
+            env (env/extend! env {})
             then (fn CC [val]
                    (GUARD CC [val])
                    (env/bind! env var val)
