@@ -1,0 +1,17 @@
+(def and
+  (macro [x y]
+    (if x y)))
+
+(def or
+  (macro [x y]
+    (if x
+      x
+      (if y
+        y))))
+
+(def dbg
+  (macro [exp]
+    (quote (println (quote (unquote exp)) "=>" (unquote exp)))))
+
+(dbg (and true false))
+(dbg (or false true))

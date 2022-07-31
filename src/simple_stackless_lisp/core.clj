@@ -2,8 +2,8 @@
   (:gen-class)
   (:refer-clojure :exclude [eval])
   (:require [clojure.edn :as edn]
-            [simple-stackless-lisp.continuations :as k]
             [simple-stackless-lisp.env :as env]
+            [simple-stackless-lisp.impl :as impl]
             [simple-stackless-lisp.util :as u]))
 
 (defn walk
@@ -24,19 +24,25 @@
     (let [[op & args] exp]
       (case op
         fn
-        (k (k/k-fn walk args env GUARD))
+        (k (impl/k-fn walk args false env GUARD))
 
         def
-        (k/k-def walk args env k GUARD)
+        (impl/k-def walk args env k GUARD)
 
         if
-        (k/k-if walk args env k GUARD)
+        (impl/k-if walk args env k GUARD)
 
         do
-        (k/k-do walk args env k GUARD)
+        (impl/k-do walk args env k GUARD)
+
+        macro
+        (k (impl/k-fn walk args true env GUARD))
+
+        quote
+        (k (impl/k-quote walk args env GUARD))
 
         ;; function call
-        (k/k-call walk exp env k GUARD)))
+        (impl/k-call walk exp env k GUARD)))
 
     :else
     (u/throw+ "Can't evaluate: " exp)))
