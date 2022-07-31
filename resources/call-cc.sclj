@@ -1,0 +1,9 @@
+"From https://stackoverflow.com/q/16529475"
+
+(def example
+  (fn []
+    (call-cc
+      (fn [k]
+        (* 5 (k 4))))))
+
+(println (example))
