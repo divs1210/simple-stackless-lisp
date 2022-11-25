@@ -6,4 +6,8 @@
   :dependencies [[org.clojure/clojure "1.11.1"]]
   :main ^:skip-aot simple-stackless-lisp.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :native-image {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
+  :plugins [[io.taylorwood/lein-native-image "0.3.1"]]
+  :native-image {:name "sclj"
+                 :opts ["--verbose"]})
