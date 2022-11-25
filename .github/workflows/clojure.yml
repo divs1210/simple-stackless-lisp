@@ -29,9 +29,14 @@ jobs:
 
     - name: Install dependencies
       run: lein deps
-    
+
+    - name: Compile JAR
+      run: lein uberjar
+
     - name: Compile native binary
-      run: lein native-image
+      run: |
+        lein native-image
+        mv target/uberjar/*-standalone.jar target/default+native-image/sclj.jar
     
     - name: Upload binary
       uses: actions/upload-artifact@v3
@@ -40,4 +45,5 @@ jobs:
         path: |
           target/default+native-image/sclj
           target/default+native-image/sclj.exe
+          target/default+native-image/sclj.jar
         if-no-files-found: warn

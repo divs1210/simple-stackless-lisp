@@ -26,10 +26,9 @@ See [code examples](resources/).
 
 ### I. Download
 
-[Here](https://github.com/divs1210/simple-stackless-lisp/releases), you can find pre-compiled:
+You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases).
 
-- Native executables for Ubuntu, MacOS, and Windows
-- Java JAR
+The download bundle contains execuatables for Ubuntu, MacOS, and Windows, and also a Java JAR.
 
 ##### Start a REPL
 
