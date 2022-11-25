@@ -22,23 +22,52 @@ See [code examples](resources/).
 
 ## Usage
 
+### Clone the project
+
 ```
 $ git clone https://github.com/divs1210/simple-stackless-lisp.git
 
 $ cd simple-stackless-lisp
 ```
 
-### Run a file
+### I. Quickstart
+
+Run the interpreter via Leiningen.
+
+Leiningen is very conveinient, but slow to start.
+
+#### Start a REPL
+
+```
+$ rlwrap lein run
+```
+
+#### Run a file
 
 ```
 $ lein run resources/fact.sclj
 ```
 
-### Start a REPL
+### II. Build native binary
+
+Requires GraalVM and its native-image tool to be installed.
 
 ```
-$ rlwrap lein run
+$ lein native-image
 ```
+
+#### Start a REPL
+
+```
+$ rlwrap target/default+native-image/sclj
+```
+
+#### Run a file
+
+```
+$ target/default+native-image/sclj resources/fact.sclj
+```
+
 
 ## License
 
