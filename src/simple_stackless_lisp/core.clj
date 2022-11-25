@@ -1,10 +1,9 @@
 (ns simple-stackless-lisp.core
-  (:gen-class)
   (:refer-clojure :exclude [eval])
-  (:require [clojure.edn :as edn]
-            [simple-stackless-lisp.env :as env]
-            [simple-stackless-lisp.impl :as impl]
-            [simple-stackless-lisp.util :as u]))
+  (:require
+   [simple-stackless-lisp.env :as env]
+   [simple-stackless-lisp.impl :as impl]
+   [simple-stackless-lisp.util :as u]))
 
 (defn walk
   [exp env k GUARD]
@@ -60,27 +59,3 @@
   ([exp env k exe]
    (let [{:keys [guard execute]} exe]
      (execute walk [exp env k guard]))))
-
-(defn repl []
-  (let [env (env/fresh-env)
-        k   #(println "=>" (pr-str %))
-        exe (u/executor)]
-    (while true
-      (try
-        (print "> ")
-        (flush)
-        (eval (u/read-exp)
-              env
-              k
-              exe)
-        (catch Exception e
-          (env/bind! env '*e e)
-          (println "Error: " (.getMessage e)))))))
-
-(defn -main
-  [& [filename]]
-  (if filename
-    (let [text (str "(do " (slurp filename) ")")
-          code (edn/read-string text)]
-      (eval code))
-    (repl)))
