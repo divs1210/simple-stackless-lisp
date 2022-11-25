@@ -1,0 +1,40 @@
+name: Clojure CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: simple-stackless-lisp ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: lein deps
+    
+    - uses: graalvm/setup-graalvm@v1
+      with:
+        version: '22.3.0'
+        java-version: '17'
+        components: 'native-image'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        native-image-job-reports: 'true'
+    
+    - name: Install dependencies
+      run: lein deps
+    
+    - name: Compile native binary
+      run: lein native-image
+    
+    - name: Upload binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: sclj-${{ matrix.os }}
+        path: sclj*
