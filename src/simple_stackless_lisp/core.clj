@@ -22,9 +22,6 @@
     (seq? exp)
     (let [[op & args] exp]
       (case op
-        fn
-        (k (impl/k-fn walk args false env GUARD))
-
         def
         (impl/k-def walk args env k GUARD)
 
@@ -37,11 +34,14 @@
         do
         (impl/k-do walk args env k GUARD)
 
-        macro
-        (k (impl/k-fn walk args true env GUARD))
-
         quote
         (k (impl/k-quote walk args env GUARD))
+
+        fn
+        (k (impl/k-fn walk args false env GUARD))
+
+        macro
+        (k (impl/k-fn walk args true env GUARD))
 
         ;; function call
         (impl/k-call walk exp env k GUARD)))

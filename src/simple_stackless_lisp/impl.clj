@@ -2,15 +2,6 @@
   (:require [clojure.walk :refer [postwalk]]
             [simple-stackless-lisp.env :as env]))
 
-(defn k-fn
-  [walk [argv body-exp] macro? env GUARD]
-  ^{:macro? macro?}
-  (fn CC [k & args]
-    (GUARD CC (cons k args))
-    (let [params (zipmap argv args)
-          fn-env (env/extend! env params)]
-      (walk body-exp fn-env k GUARD))))
-
 (defn k-def
   [walk args env k GUARD]
   (let [[sym val-exp] args]
@@ -72,6 +63,15 @@
                     node))
                 node))
             exp))
+
+(defn k-fn
+  [walk [argv body-exp] macro? env GUARD]
+  ^{:macro? macro?}
+  (fn CC [k & args]
+    (GUARD CC (cons k args))
+    (let [params (zipmap argv args)
+          fn-env (env/extend! env params)]
+      (walk body-exp fn-env k GUARD))))
 
 (defn k-call
   [walk exp env k GUARD]
