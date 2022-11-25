@@ -5,6 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.11.1"]]
   :main simple-stackless-lisp.core
+  :global-vars {*warn-on-reflection* true}
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
              :native-image {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}

@@ -31,7 +31,7 @@
        (let [~retval (try ~@body)]
          (if (instance? Retry ~retval)
            (recur ~@(->> (range bindings-count)
-                         (map (fn [i] `(nth (.bindings ~retval) ~i)))))
+                         (map (fn [i] `(nth (:bindings ~retval) ~i)))))
            ~retval)))))
 
 (defn- make-guard
