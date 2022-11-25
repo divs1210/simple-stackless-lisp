@@ -11,18 +11,52 @@ See [code examples](resources/).
 ## Example
 
 ```clojure
+;; /resources/fact.sclj
 (def fact
   (fn [n]
     (if (< n 2)
       1
       (* n (fact (- n 1))))))
 
-(println "(fact 50000) =>" (fact 50000))
+(println "(fact 50000) =>")
+(println (fact 50000))
 ```
 
 ## Usage
 
-### Clone the project
+### I. Download
+
+You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases).
+
+The download bundle contains execuatables for Ubuntu, MacOS, and Windows, and also a Java JAR.
+
+##### Start a REPL
+
+```
+$ ./sclj
+```
+
+or
+
+```
+$ java -jar sclj.jar
+```
+
+##### Run a file
+
+```
+$ ./sclj code.sclj
+```
+
+or
+
+```
+$ java -jar sclj.jar code.sclj
+```
+
+### II. Build from source
+
+#### Clone this project
 
 ```
 $ git clone https://github.com/divs1210/simple-stackless-lisp.git
@@ -30,44 +64,21 @@ $ git clone https://github.com/divs1210/simple-stackless-lisp.git
 $ cd simple-stackless-lisp
 ```
 
-### I. Quickstart
+#### Build a JAR
 
-Run the interpreter via Leiningen.
-
-Leiningen is very conveinient, but slow to start.
-
-#### Start a REPL
+Requires Java and Leiningen to be installed.
 
 ```
-$ rlwrap lein run
+$ lein uberjar
 ```
 
-#### Run a file
-
-```
-$ lein run resources/fact.sclj
-```
-
-### II. Build native binary
+#### Build a native executable
 
 Requires GraalVM and its native-image tool to be installed.
 
 ```
 $ lein native-image
 ```
-
-#### Start a REPL
-
-```
-$ rlwrap target/default+native-image/sclj
-```
-
-#### Run a file
-
-```
-$ target/default+native-image/sclj resources/fact.sclj
-```
-
 
 ## License
 

@@ -1,8 +1,6 @@
 name: Clojure CI
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -12,7 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
     
@@ -22,7 +20,7 @@ jobs:
         java-version: '17'
         components: 'native-image'
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        native-image-job-reports: 'true'
+        native-image-job-reports: 'false'
 
     - name: Install clojure tools
       uses: DeLaGuardo/setup-clojure@10.1
@@ -31,13 +29,21 @@ jobs:
 
     - name: Install dependencies
       run: lein deps
-    
+
+    - name: Compile JAR
+      run: lein uberjar
+
     - name: Compile native binary
-      run: lein native-image
+      run: |
+        lein native-image
+        mv target/uberjar/*-standalone.jar target/default+native-image/sclj.jar
     
     - name: Upload binary
       uses: actions/upload-artifact@v3
       with:
         name: sclj-${{ matrix.os }}
-        path: target/default+native-image/sclj
-        if-no-files-found: error
+        path: |
+          target/default+native-image/sclj
+          target/default+native-image/sclj.exe
+          target/default+native-image/sclj.jar
+        if-no-files-found: warn
