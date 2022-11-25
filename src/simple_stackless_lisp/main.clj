@@ -7,7 +7,13 @@
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.util :as u]))
 
-(defn repl []
+(defn run-file
+  [filename]
+  (let [text (str "(do " (slurp filename) ")")
+        code (edn/read-string text)]
+    (eval code)))
+
+(defn run-repl []
   (let [env (env/fresh-env)
         k   #(println "=>" (pr-str %) "\n")
         exe (u/executor)]
@@ -29,7 +35,5 @@
 (defn -main
   [& [filename]]
   (if filename
-    (let [text (str "(do " (slurp filename) ")")
-          code (edn/read-string text)]
-      (eval code))
-    (repl)))
+    (run-file filename)
+    (run-repl)))
