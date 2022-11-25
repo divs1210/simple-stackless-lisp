@@ -12,12 +12,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Install dependencies
-      run: lein deps
     
     - uses: graalvm/setup-graalvm@v1
       with:
@@ -26,7 +23,12 @@ jobs:
         components: 'native-image'
         github-token: ${{ secrets.GITHUB_TOKEN }}
         native-image-job-reports: 'true'
-    
+
+    - name: Install clojure tools
+      uses: DeLaGuardo/setup-clojure@10.1
+      with:
+        lein: 2.9.1
+
     - name: Install dependencies
       run: lein deps
     
@@ -34,7 +36,8 @@ jobs:
       run: lein native-image
     
     - name: Upload binary
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: sclj-${{ matrix.os }}
-        path: sclj*
+        path: target/default+native-image/sclj
+        if-no-files-found: error
