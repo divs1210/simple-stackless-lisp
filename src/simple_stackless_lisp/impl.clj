@@ -67,7 +67,7 @@
 
 (defn k-fn
   [walk [[argv body-exp] macro?] env k GUARD]
-  (k ^{:macro? macro?}
+  (k ^{::macro? macro?}
      (fn CC [k & args]
        (GUARD CC (cons k args))
        (let [params (zipmap argv args)
@@ -81,7 +81,7 @@
           env
           (fn CC [f]
             (GUARD CC [f])
-            (if (:macro? (meta f))
+            (if (::macro? (meta f))
               (letfn [(then [new-exp]
                         (walk new-exp env k GUARD))]
                 (apply f (cons then args)))
