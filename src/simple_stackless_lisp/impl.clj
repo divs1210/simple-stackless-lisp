@@ -54,24 +54,25 @@
          (k last))) nil 0)))
 
 (defn k-quote
-  [walk [exp] env GUARD]
-  (postwalk (fn [node]
-              (if (seq? node)
-                (let [[op arg] node]
-                  (if (= 'unquote op)
-                    (walk arg env identity GUARD)
-                    node))
-                node))
-            exp))
+  [walk [exp] env k GUARD]
+  (k (postwalk (fn CC [node]
+                 (GUARD CC [node])
+                 (if (seq? node)
+                   (let [[op arg] node]
+                     (if (= 'unquote op)
+                       (walk arg env identity GUARD)
+                       node))
+                   node))
+               exp)))
 
 (defn k-fn
-  [walk [argv body-exp] macro? env GUARD]
-  ^{:macro? macro?}
-  (fn CC [k & args]
-    (GUARD CC (cons k args))
-    (let [params (zipmap argv args)
-          fn-env (env/extend! env params)]
-      (walk body-exp fn-env k GUARD))))
+  [walk [[argv body-exp] macro?] env k GUARD]
+  (k ^{:macro? macro?}
+     (fn CC [k & args]
+       (GUARD CC (cons k args))
+       (let [params (zipmap argv args)
+             fn-env (env/extend! env params)]
+         (walk body-exp fn-env k GUARD)))))
 
 (defn k-call
   [walk exp env k GUARD]

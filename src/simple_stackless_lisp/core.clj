@@ -35,13 +35,13 @@
         (impl/k-do walk args env k GUARD)
 
         quote
-        (k (impl/k-quote walk args env GUARD))
+        (impl/k-quote walk args env k GUARD)
 
         fn
-        (k (impl/k-fn walk args false env GUARD))
+        (impl/k-fn walk [args false] env k GUARD)
 
         macro
-        (k (impl/k-fn walk args true env GUARD))
+        (impl/k-fn walk [args true] env k GUARD)
 
         ;; function call
         (impl/k-call walk exp env k GUARD)))
