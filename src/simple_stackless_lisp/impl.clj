@@ -1,6 +1,7 @@
 (ns simple-stackless-lisp.impl
   (:require [clojure.walk :refer [postwalk]]
-            [simple-stackless-lisp.env :as env]))
+            [simple-stackless-lisp.env :as env]
+            [simple-stackless-lisp.util :as u]))
 
 (defn k-def
   [walk args env k GUARD]
@@ -40,18 +41,13 @@
 
 (defn k-do
   [walk exps env k GUARD]
-  (let [exps (vec exps)
-        len (count exps)]
-    ((fn -loop [last idx]
-       (GUARD -loop [last idx])
-       (if (< idx len)
-         (walk (exps idx)
-               env
-               (fn CC [val]
-                 (GUARD CC [val])
-                 (-loop val (inc idx)))
-               GUARD)
-         (k last))) nil 0)))
+  (u/k-reduce (fn CC [last exp then GUARD]
+                (GUARD CC [last exp then GUARD])
+                (walk exp env then GUARD))
+              nil
+              exps
+              k
+              GUARD))
 
 (defn k-quote
   "TODO: implement and use stackless postwalk"
