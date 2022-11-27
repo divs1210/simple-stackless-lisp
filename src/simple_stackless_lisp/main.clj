@@ -9,9 +9,8 @@
 (defn run-file
   [filename]
   (let [text (str "(do " (slurp filename) ")")
-        code (edn/read-string text)
-        env  (env/fresh-env core/builtins)]
-    (core/eval code env)))
+        code (edn/read-string text)]
+    (core/eval code)))
 
 (defn run-repl []
   (let [env (env/fresh-env core/builtins)
