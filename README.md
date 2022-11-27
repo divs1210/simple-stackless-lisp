@@ -22,6 +22,8 @@ More to come!
 
 More [code examples](examples/) are available.
 
+There's also a [User's Manual](docs/manual.md).
+
 ## Usage
 
 ### I. Download
