@@ -1,17 +1,15 @@
 # simple-stackless-lisp
 
-Interpreter for a simple Clojure-like Lisp.
+A small but powerful Clojure-like Lisp.
 
-Made stackless using [Lisperator's technique](https://lisperator.net/pltut/cps-evaluator/).
+Has first class continuations and macros.
 
-Has first class support for continuations and macros.
-
-See [code examples](resources/).
+More to come!
 
 ## Example
 
 ```clojure
-;; /resources/fact.sclj
+;; examples/fact.sclj
 (def fact
   (fn [n]
     (if (< n 2)
@@ -22,13 +20,13 @@ See [code examples](resources/).
 (println (fact 50000))
 ```
 
+More [code examples](examples/) are available.
+
 ## Usage
 
 ### I. Download
 
 You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases).
-
-The download bundle contains execuatables for Ubuntu, MacOS, and Windows, and also a Java JAR.
 
 ##### Start a REPL
 
