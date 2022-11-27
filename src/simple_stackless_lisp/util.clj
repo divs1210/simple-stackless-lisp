@@ -80,14 +80,14 @@
 
 (defn k-reduce
   "A stackless reduce implementation.
-  Even the accumulator function `f` is stackless.
-  This function is the real core of this implementation."
+  `f` will be called like:
+    (f acc x k GUARD)"
   [f acc xs k GUARD]
   (if-let [[x & remaining] (seq xs)]
-    (letfn [(then [newAcc]
-              (GUARD then [newAcc])
-              (k-reduce f newAcc remaining k GUARD))]
-      (f acc x then GUARD))
+    (letfn [(with-new-acc [new-acc]
+              (GUARD with-new-acc [new-acc])
+              (k-reduce f new-acc remaining k GUARD))]
+      (f acc x with-new-acc GUARD))
     (k acc)))
 
 (defn k-map
