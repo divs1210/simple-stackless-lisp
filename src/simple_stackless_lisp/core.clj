@@ -43,6 +43,9 @@
         macro
         (impl/k-fn walk [args true] env k GUARD)
 
+        eval
+        (impl/k-eval walk args env k GUARD)
+
         ;; function call
         (impl/k-apply walk exp env k GUARD)))
 

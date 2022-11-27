@@ -1,0 +1,7 @@
+(def a 1)
+
+(def code
+  (quote
+    (+ a 1)))
+
+(println (eval code))
