@@ -1,6 +1,7 @@
 (ns simple-stackless-lisp.impl
   (:require [clojure.walk :refer [postwalk]]
-            [simple-stackless-lisp.env :as env]))
+            [simple-stackless-lisp.env :as env]
+            [simple-stackless-lisp.util :as u]))
 
 (defn k-def
   [walk args env k GUARD]
@@ -40,18 +41,13 @@
 
 (defn k-do
   [walk exps env k GUARD]
-  (let [exps (vec exps)
-        len (count exps)]
-    ((fn -loop [last idx]
-       (GUARD -loop [last idx])
-       (if (< idx len)
-         (walk (exps idx)
-               env
-               (fn CC [val]
-                 (GUARD CC [val])
-                 (-loop val (inc idx)))
-               GUARD)
-         (k last))) nil 0)))
+  (u/k-reduce (fn CC [_ exp then GUARD]
+                (GUARD CC [nil exp then GUARD])
+                (walk exp env then GUARD))
+              nil
+              exps
+              k
+              GUARD))
 
 (defn k-quote
   "TODO: implement and use stackless postwalk"
@@ -74,28 +70,32 @@
              fn-env (env/extend! env params)]
          (walk body-exp fn-env k GUARD)))))
 
-(defn k-call
+(defn- k-apply-fn
+  [walk [f arg-exps] env k GUARD]
+  (letfn [(with-args [args]
+            (GUARD with-args [args])
+            (apply f (cons k args)))]
+    (u/k-map (fn CC [x-exp with-x GUARD]
+               (GUARD CC [x-exp with-x GUARD])
+               (walk x-exp env with-x GUARD))
+             arg-exps
+             with-args
+             GUARD)))
+
+(defn- k-apply-macro
+  [walk [m arg-exps] env k GUARD]
+  (letfn [(with-new-exp [new-exp]
+            (GUARD with-new-exp [new-exp])
+            (walk new-exp env k GUARD))]
+    (apply m (cons with-new-exp arg-exps))))
+
+(defn k-apply
   [walk exp env k GUARD]
-  (let [[op & args] exp]
-    (walk op
-          env
-          (fn CC [f]
-            (GUARD CC [f])
-            (if (::macro? (meta f))
-              (letfn [(then [new-exp]
-                        (walk new-exp env k GUARD))]
-                (apply f (cons then args)))
-              (let [arg-exps (vec args)
-                    len (count arg-exps)]
-                (letfn [(-loop [args idx]
-                          (GUARD -loop [args idx])
-                          (if (< idx len)
-                            (walk (arg-exps idx)
-                                  env
-                                  (fn CC [arg]
-                                    (GUARD CC [arg])
-                                    (-loop (conj args arg) (inc idx)))
-                                  GUARD)
-                            (apply f args)))]
-                  (-loop [k] 0)))))
-          GUARD)))
+  (let [[f-exp & arg-exps] exp]
+    (letfn [(with-f [f]
+              (GUARD with-f [f])
+              (let [apply-fn (if (::macro? (meta f))
+                               k-apply-macro
+                               k-apply-fn)]
+                (apply-fn walk [f arg-exps] env k GUARD)))]
+      (walk f-exp env with-f GUARD))))
