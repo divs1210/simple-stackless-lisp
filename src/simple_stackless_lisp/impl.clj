@@ -72,26 +72,21 @@
 
 (defn k-call
   [walk exp env k GUARD]
-  (let [[op & args] exp]
-    (walk op
-          env
-          (fn CC [f]
-            (GUARD CC [f])
-            (if (::macro? (meta f))
-              (letfn [(then [new-exp]
-                        (walk new-exp env k GUARD))]
-                (apply f (cons then args)))
-              (let [arg-exps (vec args)
-                    len (count arg-exps)]
-                (letfn [(-loop [args idx]
-                          (GUARD -loop [args idx])
-                          (if (< idx len)
-                            (walk (arg-exps idx)
-                                  env
-                                  (fn CC [arg]
-                                    (GUARD CC [arg])
-                                    (-loop (conj args arg) (inc idx)))
-                                  GUARD)
-                            (apply f args)))]
-                  (-loop [k] 0)))))
-          GUARD)))
+  (let [[f-exp & arg-exps] exp]
+    (letfn [(with-f [f]
+              (GUARD with-f [f])
+              (if (::macro? f)
+                (letfn [(with-new-exp [new-exp]
+                          (GUARD with-new-exp [new-exp])
+                          (walk new-exp env k GUARD))]
+                  (apply f (cons with-new-exp arg-exps)))
+                (letfn [(with-args [args]
+                          (GUARD with-args [args])
+                          (apply f (cons k args)))]
+                  (u/k-map (fn CC [x-exp with-x GUARD]
+                             (GUARD CC [x-exp with-x GUARD])
+                             (walk x-exp env with-x GUARD))
+                           arg-exps
+                           k
+                           GUARD))))]
+      (walk f-exp env with-f GUARD))))
