@@ -2,15 +2,6 @@
   (:require [clojure.walk :refer [postwalk]]
             [simple-stackless-lisp.env :as env]))
 
-(defn k-fn
-  [walk [argv body-exp] macro? env GUARD]
-  ^{:macro? macro?}
-  (fn CC [k & args]
-    (GUARD CC (cons k args))
-    (let [params (zipmap argv args)
-          fn-env (env/extend! env params)]
-      (walk body-exp fn-env k GUARD))))
-
 (defn k-def
   [walk args env k GUARD]
   (let [[sym val-exp] args]
@@ -63,15 +54,25 @@
          (k last))) nil 0)))
 
 (defn k-quote
-  [walk [exp] env GUARD]
-  (postwalk (fn [node]
-              (if (seq? node)
-                (let [[op arg] node]
-                  (if (= 'unquote op)
-                    (walk arg env identity GUARD)
-                    node))
-                node))
-            exp))
+  "TODO: implement and use stackless postwalk"
+  [walk [exp] env k GUARD]
+  (k (postwalk (fn [node]
+                 (if (seq? node)
+                   (let [[op arg] node]
+                     (if (= 'unquote op)
+                       (walk arg env identity GUARD)
+                       node))
+                   node))
+               exp)))
+
+(defn k-fn
+  [walk [[argv body-exp] macro?] env k GUARD]
+  (k ^{::macro? macro?}
+     (fn CC [k & args]
+       (GUARD CC (cons k args))
+       (let [params (zipmap argv args)
+             fn-env (env/extend! env params)]
+         (walk body-exp fn-env k GUARD)))))
 
 (defn k-call
   [walk exp env k GUARD]
@@ -80,7 +81,7 @@
           env
           (fn CC [f]
             (GUARD CC [f])
-            (if (:macro? (meta f))
+            (if (::macro? (meta f))
               (letfn [(then [new-exp]
                         (walk new-exp env k GUARD))]
                 (apply f (cons then args)))

@@ -65,19 +65,26 @@
      :execute (partial make-execute guard-state)}))
 
 (defn throw+
+  "Throws a generic error with the given message."
   [& strs]
   (throw (Exception. (str/join strs))))
 
 (defn ->cps
+  "Converts function to Continuation Passing Style.
+  This code:
+    ((->cps inc) println 1)
+  prints 2."
   [f]
   (fn [k & args]
     (k (apply f args))))
 
-(defn read-exp []
+(defn read-exp
+  "Reads a multi-line edn expression from stdin."
+  []
   (with-retry [text (read-line)]
     (edn/read-string text)
     (catch RuntimeException e
-      (let [msg (.getMessage e)]
-        (if (= "EOF while reading" msg)
-          (retry (str text (read-line)))
-          (throw e))))))
+      (if (= "EOF while reading"
+             (.getMessage e))
+        (retry (str text (read-line)))
+        (throw e)))))
