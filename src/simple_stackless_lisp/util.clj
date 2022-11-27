@@ -78,6 +78,34 @@
   (fn [k & args]
     (k (apply f args))))
 
+(defn k-reduce
+  "A stackless reduce implementation.
+  Even the accumulator function `f` is stackless.
+  This function is the real core of this implementation."
+  [f acc xs k GUARD]
+  (if-let [[x & remaining] (seq xs)]
+    (letfn [(then [newAcc]
+              (GUARD then [newAcc])
+              (k-reduce f newAcc remaining k GUARD))]
+      (f acc x then GUARD))
+    (k acc)))
+
+(defn k-map
+  "A stackless map implementation.
+  Built on top of `k-reduce`."
+  [f xs k GUARD]
+  (k-reduce (fn CC [acc x then GUARD]
+              (GUARD CC [acc x then GUARD])
+              (f x
+                 (fn CC [fx]
+                   (GUARD CC [fx])
+                   (then (conj acc fx)))
+                 GUARD))
+            []
+            xs
+            k
+            GUARD))
+
 (defn read-exp
   "Reads a multi-line edn expression from stdin."
   []
