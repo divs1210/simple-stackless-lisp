@@ -4,7 +4,7 @@ A small but powerful Clojure-like Lisp.
 
 Has first class continuations and macros.
 
-More to come!
+This is a **Work In Progress**, and there is [more to come](docs/vision.md)!
 
 ## Example
 
