@@ -41,8 +41,8 @@
 
 (defn k-do
   [walk exps env k GUARD]
-  (u/k-reduce (fn CC [last exp then GUARD]
-                (GUARD CC [last exp then GUARD])
+  (u/k-reduce (fn CC [_ exp then GUARD]
+                (GUARD CC [nil exp then GUARD])
                 (walk exp env then GUARD))
               nil
               exps
