@@ -71,11 +71,11 @@
          (walk body-exp fn-env k GUARD)))))
 
 (defn k-eval
-  [walk [exp] env k GUARD]
-  (letfn [(with-new-exp [new-exp]
-            (GUARD with-new-exp [new-exp])
-            (walk new-exp env k GUARD))]
-    (walk exp env with-new-exp GUARD)))
+  [walk [code-exp] env k GUARD]
+  (letfn [(with-code [code]
+            (GUARD with-code [code])
+            (walk code env k GUARD))]
+    (walk code-exp env with-code GUARD)))
 
 (defn- k-apply-fn
   [walk [f arg-exps] env k GUARD]
