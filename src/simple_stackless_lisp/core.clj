@@ -3,7 +3,7 @@
   (:require
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.impl :as impl]
-   [simple-stackless-lisp.util :as u]))
+   [simple-stackless-lisp.util :as u :refer [->cps]]))
 
 (defn walk
   [exp env k GUARD]
@@ -49,9 +49,37 @@
     :else
     (u/throw+ "Can't evaluate: " exp)))
 
+(def builtins
+  {'list  (->cps list)
+   'first (->cps first)
+   'rest  (->cps rest)
+   'seq   (->cps seq)
+   'cons  (->cps cons)
+
+   'print   (->cps print)
+   'println (->cps println)
+
+   'gensym  (->cps gensym)
+
+   'call-cc
+   (fn [k f]
+     (f k (fn CC [_ ret]
+            (k ret))))
+
+   '= (->cps =)
+   '< (->cps <)
+   '> (->cps >)
+   '<= (->cps <=)
+   '>= (->cps >=)
+
+   '+ (->cps +')
+   '- (->cps -)
+   '* (->cps *')
+   '/ (->cps /)})
+
 (defn eval
   ([exp]
-   (eval exp (env/fresh-env)))
+   (eval exp (env/fresh-env builtins)))
   ([exp env]
    (eval exp env identity))
   ([exp env k]
