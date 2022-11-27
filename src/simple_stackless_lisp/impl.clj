@@ -70,23 +70,32 @@
              fn-env (env/extend! env params)]
          (walk body-exp fn-env k GUARD)))))
 
-(defn k-call
+(defn- k-apply-fn
+  [walk [f arg-exps] env k GUARD]
+  (letfn [(with-args [args]
+            (GUARD with-args [args])
+            (apply f (cons k args)))]
+    (u/k-map (fn CC [x-exp with-x GUARD]
+               (GUARD CC [x-exp with-x GUARD])
+               (walk x-exp env with-x GUARD))
+             arg-exps
+             with-args
+             GUARD)))
+
+(defn- k-apply-macro
+  [walk [m arg-exps] env k GUARD]
+  (letfn [(with-new-exp [new-exp]
+            (GUARD with-new-exp [new-exp])
+            (walk new-exp env k GUARD))]
+    (apply m (cons with-new-exp arg-exps))))
+
+(defn k-apply
   [walk exp env k GUARD]
   (let [[f-exp & arg-exps] exp]
     (letfn [(with-f [f]
               (GUARD with-f [f])
-              (if (::macro? f)
-                (letfn [(with-new-exp [new-exp]
-                          (GUARD with-new-exp [new-exp])
-                          (walk new-exp env k GUARD))]
-                  (apply f (cons with-new-exp arg-exps)))
-                (letfn [(with-args [args]
-                          (GUARD with-args [args])
-                          (apply f (cons k args)))]
-                  (u/k-map (fn CC [x-exp with-x GUARD]
-                             (GUARD CC [x-exp with-x GUARD])
-                             (walk x-exp env with-x GUARD))
-                           arg-exps
-                           k
-                           GUARD))))]
+              (let [apply-fn (if (::macro? (meta f))
+                               k-apply-macro
+                               k-apply-fn)]
+                (apply-fn walk [f arg-exps] env k GUARD)))]
       (walk f-exp env with-f GUARD))))

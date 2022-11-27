@@ -44,7 +44,7 @@
         (impl/k-fn walk [args true] env k GUARD)
 
         ;; function call
-        (impl/k-call walk exp env k GUARD)))
+        (impl/k-apply walk exp env k GUARD)))
 
     :else
     (u/throw+ "Can't evaluate: " exp)))
