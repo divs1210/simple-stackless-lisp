@@ -1,6 +1,8 @@
 # Simple Stackless Lisp User's Manual
 
-This language is a **work in progress**.
+This language is a **Work In Progress**.
+
+Feel free to play around with it, though!
 
 # Builtins
 
