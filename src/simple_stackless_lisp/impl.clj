@@ -70,6 +70,13 @@
              fn-env (env/extend! env params)]
          (walk body-exp fn-env k GUARD)))))
 
+(defn k-eval
+  [walk [code-exp] env k GUARD]
+  (letfn [(with-code [code]
+            (GUARD with-code [code])
+            (walk code env k GUARD))]
+    (walk code-exp env with-code GUARD)))
+
 (defn- k-apply-fn
   [walk [f arg-exps] env k GUARD]
   (letfn [(with-args [args]
@@ -90,12 +97,11 @@
     (apply m (cons with-new-exp arg-exps))))
 
 (defn k-apply
-  [walk exp env k GUARD]
-  (let [[f-exp & arg-exps] exp]
-    (letfn [(with-f [f]
-              (GUARD with-f [f])
-              (let [apply-fn (if (::macro? (meta f))
-                               k-apply-macro
-                               k-apply-fn)]
-                (apply-fn walk [f arg-exps] env k GUARD)))]
-      (walk f-exp env with-f GUARD))))
+  [walk [f-exp arg-exps] env k GUARD]
+  (letfn [(with-f [f]
+            (GUARD with-f [f])
+            (let [apply-fn (if (::macro? (meta f))
+                             k-apply-macro
+                             k-apply-fn)]
+              (apply-fn walk [f arg-exps] env k GUARD)))]
+    (walk f-exp env with-f GUARD)))
