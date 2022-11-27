@@ -47,7 +47,7 @@
         (impl/k-eval walk args env k GUARD)
 
         ;; function call
-        (impl/k-apply walk exp env k GUARD)))
+        (impl/k-apply walk [op args] env k GUARD)))
 
     :else
     (u/throw+ "Can't evaluate: " exp)))
@@ -62,7 +62,11 @@
    'print   (->cps print)
    'println (->cps println)
 
-   'gensym  (->cps gensym)
+   'gensym (->cps gensym)
+
+   'apply
+   (fn [k f args]
+     (apply f (cons k args)))
 
    'call-cc
    (fn [k f]

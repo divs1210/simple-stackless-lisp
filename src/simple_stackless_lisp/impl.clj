@@ -97,12 +97,11 @@
     (apply m (cons with-new-exp arg-exps))))
 
 (defn k-apply
-  [walk exp env k GUARD]
-  (let [[f-exp & arg-exps] exp]
-    (letfn [(with-f [f]
-              (GUARD with-f [f])
-              (let [apply-fn (if (::macro? (meta f))
-                               k-apply-macro
-                               k-apply-fn)]
-                (apply-fn walk [f arg-exps] env k GUARD)))]
-      (walk f-exp env with-f GUARD))))
+  [walk [f-exp arg-exps] env k GUARD]
+  (letfn [(with-f [f]
+            (GUARD with-f [f])
+            (let [apply-fn (if (::macro? (meta f))
+                             k-apply-macro
+                             k-apply-fn)]
+              (apply-fn walk [f arg-exps] env k GUARD)))]
+    (walk f-exp env with-f GUARD)))
