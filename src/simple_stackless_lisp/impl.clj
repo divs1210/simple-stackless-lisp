@@ -54,9 +54,9 @@
          (k last))) nil 0)))
 
 (defn k-quote
+  "TODO: implement and use stackless postwalk"
   [walk [exp] env k GUARD]
-  (k (postwalk (fn CC [node]
-                 (GUARD CC [node])
+  (k (postwalk (fn [node]
                  (if (seq? node)
                    (let [[op arg] node]
                      (if (= 'unquote op)
