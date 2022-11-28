@@ -1,0 +1,43 @@
+;; (ns sclj.core)
+
+(def defmacro
+  (macro [mname argv body]
+   (quote
+    (def (unquote mname)
+      (macro (unquote argv)
+        (unquote body))))))
+
+(defmacro defn
+  [fname argv body]
+  (quote
+   (def (unquote fname)
+     (fn (unquote argv)
+       (unquote body)))))
+
+(defn macroexpand-1
+  [form]
+  (let [m (eval (first form))
+        args (rest form)]
+    (apply m args)))
+
+(defmacro lazy-seq [exp]
+  (quote
+   (lazy-seq* (fn [] (unquote exp)))))
+
+(defn not [x]
+  (if x false true))
+
+(defn empty? [xs]
+  (not (seq xs)))
+
+(defn concat
+  [xs ys]
+  (if (empty? xs)
+    ys
+    (if (empty? ys)
+      xs
+      (lazy-seq
+       (cons (first xs)
+             (concat (rest xs) ys))))))
+
+(println (concat (list 1 2 3) (list 4 5)))

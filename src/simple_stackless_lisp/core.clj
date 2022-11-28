@@ -59,6 +59,10 @@
    'seq   (->cps seq)
    'cons  (->cps cons)
 
+   'lazy-seq*
+   (fn [k f]
+     (k (clojure.lang.LazySeq. (fn [] (f identity)))))
+
    'print   (->cps print)
    'println (->cps println)
 

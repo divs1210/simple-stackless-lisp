@@ -8,9 +8,14 @@
 
 (defn run-file
   [filename]
-  (let [text (str "(do " (slurp filename) ")")
-        code (edn/read-string text)]
-    (core/eval code)))
+  (try
+    (let [text (str "(do " (slurp filename) ")")
+          code (edn/read-string text)]
+      (core/eval code))
+    (catch Exception e
+      (println "Error: " (.getMessage e))
+      (println "Writing error log to sclj-err-log.edn")
+      (spit "sclj-err-log.edn" (pr-str e)))))
 
 (defn run-repl []
   (let [env (env/fresh-env core/builtins)
