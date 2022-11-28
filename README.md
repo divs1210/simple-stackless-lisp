@@ -48,7 +48,7 @@ $ rlwrap ./sclj
 $ ./sclj code.sclj
 ```
 
-## RTFM
+## Build from source
 
 [The manual](docs/manual.md) contains more info on building and running the interpreter.
 
