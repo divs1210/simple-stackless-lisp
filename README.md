@@ -52,6 +52,10 @@ $ ./sclj code.sclj
 
 [The manual](docs/manual.md) contains more info on building and running the interpreter.
 
+## Thanks
+
+[Lisperator's technique](https://lisperator.net/pltut/cps-evaluator/) for building a stackless interpreter led me down this rabbit hole.
+
 ## License
 
 Copyright © 2022 Divyansh Prakash
