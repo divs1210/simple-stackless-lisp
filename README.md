@@ -42,6 +42,12 @@ or
 $ java -jar sclj.jar
 ```
 
+**NOTE:** Running a REPL with `rlwrap` will lead to a much more pleasant experience:
+
+```
+$ rlwrap ./sclj
+```
+
 ##### Run a file
 
 ```
