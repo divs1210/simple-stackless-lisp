@@ -26,20 +26,14 @@ There's also a [User's Manual](docs/manual.md).
 
 ## Usage
 
-### I. Download
+### Download
 
-You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases).
+You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases/latest).
 
-##### Start a REPL
+### Start a REPL
 
 ```
 $ ./sclj
-```
-
-or
-
-```
-$ java -jar sclj.jar
 ```
 
 **NOTE:** Running a REPL with `rlwrap` will lead to a much more pleasant experience:
@@ -48,43 +42,15 @@ $ java -jar sclj.jar
 $ rlwrap ./sclj
 ```
 
-##### Run a file
+### Run a file
 
 ```
 $ ./sclj code.sclj
 ```
 
-or
+## RTFM
 
-```
-$ java -jar sclj.jar code.sclj
-```
-
-### II. Build from source
-
-#### Clone this project
-
-```
-$ git clone https://github.com/divs1210/simple-stackless-lisp.git
-
-$ cd simple-stackless-lisp
-```
-
-#### Build a JAR
-
-Requires Java and Leiningen to be installed.
-
-```
-$ lein uberjar
-```
-
-#### Build a native executable
-
-Requires GraalVM and its native-image tool to be installed.
-
-```
-$ lein native-image
-```
+[The manual](docs/manual.md) contains more info on building and running the interpreter.
 
 ## License
 

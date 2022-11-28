@@ -4,9 +4,9 @@ This language is a **Work In Progress**.
 
 Feel free to play around with it, though!
 
-# Builtins
+## Language Spec
 
-## Types
+### Types
 
 - Nil: `nil`
 - Arbitrary precision numbers: `1`, `0.0004`, `2334234.3423443`
@@ -16,9 +16,9 @@ Feel free to play around with it, though!
 - Lists: `(list 1 2 3)`
 - Functions: `(fn [x] (+ x 1))`
 
-## Special forms
+### Special forms
 
-### def
+#### def
 
 Binds a symbol to a value in the top-level (global) environment.
 
@@ -32,7 +32,7 @@ Binds a symbol to a value in the top-level (global) environment.
 c ;; => 3
 ```
 
-### let
+#### let
 
 Lexically scoped local bindings.
 
@@ -43,7 +43,7 @@ Lexically scoped local bindings.
   c) ;; => 3
 ```
 
-### if
+#### if
 
 ```clojure
 (if (< 1 2)
@@ -51,7 +51,7 @@ Lexically scoped local bindings.
   "b") ;; => "a"
 ```
 
-### do
+#### do
 
 ```clojure
 (do
@@ -62,7 +62,7 @@ Lexically scoped local bindings.
 ;; b
 ```
 
-### quote
+#### quote
 
 Returns its argument unevaluated.
 
@@ -71,7 +71,7 @@ Returns its argument unevaluated.
 (quote (1 2 a "d" (+ 2 4))) ;=> (1 2 a "d" (+ 2 4))
 ```
 
-### fn
+#### fn
 
 ```clojure
 (def add
@@ -81,7 +81,7 @@ Returns its argument unevaluated.
 (add 1 2) ;; => 3
 ```
 
-### macro
+#### macro
 
 CL-like unhygeinic macros for now.
 
@@ -99,7 +99,7 @@ CL-like unhygeinic macros for now.
 ;; (+ 1 2) => 3
 ```
 
-### eval
+#### eval
 
 ```clojure
 (def a 1)
@@ -109,31 +109,79 @@ CL-like unhygeinic macros for now.
   (eval code)) ;; => 3
 ```
 
-## Functions
+### Functions
 
-### Sequences
-- `list`
-- `first`
-- `rest`
-- `seq`
-- `cons`
+#### Sequences
+`list`, `first`, `rest`, `seq` ,`cons`
 
-### IO
-- `print`
-- `println`
+#### IO
+`print`, `println`
 
-### Math
-- `=`
-- `<`
-- `>`
-- `<=`
-- `>=`
-- `+`
-- `-`
-- `*`
-- `/`
+#### Math
+`=`, `<`, `>`, `<=`, `>=`, `+`, `-`, `*`, `/`
 
-### Misc
-- `gensym`
-- `apply`
-- `call-cc`
+#### Misc
+`gensym`, `apply`, `call-cc`
+
+## Usage
+
+### I. Download
+
+You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases/latest).
+
+##### Start a REPL
+
+```
+$ ./sclj
+```
+
+or
+
+```
+$ java -jar sclj.jar
+```
+
+**NOTE:** Running a REPL with `rlwrap` will lead to a much more pleasant experience:
+
+```
+$ rlwrap ./sclj
+```
+
+##### Run a file
+
+```
+$ ./sclj code.sclj
+```
+
+or
+
+```
+$ java -jar sclj.jar code.sclj
+```
+
+### II. Build from source
+
+#### Clone this project
+
+```
+$ git clone https://github.com/divs1210/simple-stackless-lisp.git
+
+$ cd simple-stackless-lisp
+```
+
+#### Build a JAR
+
+Requires Java and Leiningen to be installed.
+
+```
+$ lein uberjar
+```
+
+#### Build a native executable
+
+Requires GraalVM and its native-image tool to be installed.
+
+```
+$ lein native-image
+```
+
