@@ -18,4 +18,4 @@
 - Leiningen-like all-in-one tool for deps, builds, etc.
 - Visual debugger
 - Native/JS runtimes
-- Full-stack web framework
+- Web framework
