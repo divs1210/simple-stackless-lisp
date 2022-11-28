@@ -22,7 +22,7 @@ This is a **Work In Progress**, and there is [more to come](docs/vision.md)!
 
 More [code examples](examples/) are available.
 
-There's also a [User's Manual](docs/manual.md).
+There's also a [User Manual](docs/manual.md).
 
 ## Usage
 
