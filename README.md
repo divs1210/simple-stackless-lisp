@@ -1,17 +1,15 @@
 # simple-stackless-lisp
 
-Interpreter for a simple Clojure-like Lisp.
+A small but powerful Clojure-like Lisp.
 
-Made stackless using [Lisperator's technique](https://lisperator.net/pltut/cps-evaluator/).
+Has first class continuations and macros.
 
-Has first class support for continuations and macros.
-
-See [code examples](resources/).
+This is a **Work In Progress**, and there is [more to come](docs/vision.md)!
 
 ## Example
 
 ```clojure
-;; /resources/fact.sclj
+;; examples/fact.sclj
 (def fact
   (fn [n]
     (if (< n 2)
@@ -22,63 +20,41 @@ See [code examples](resources/).
 (println (fact 50000))
 ```
 
+More [code examples](examples/) are available.
+
+There's also a [User Manual](docs/manual.md).
+
 ## Usage
 
-### I. Download
+### Download
 
-You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases).
+You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases/latest).
 
-The download bundle contains execuatables for Ubuntu, MacOS, and Windows, and also a Java JAR.
-
-##### Start a REPL
+### Start a REPL
 
 ```
 $ ./sclj
 ```
 
-or
+Use `rlwrap` for a more pleasant REPL experience:
 
 ```
-$ java -jar sclj.jar
+$ rlwrap ./sclj
 ```
 
-##### Run a file
+### Run a file
 
 ```
 $ ./sclj code.sclj
 ```
 
-or
+## RTFM
 
-```
-$ java -jar sclj.jar code.sclj
-```
+[The manual](docs/manual.md) contains more info on building and running the interpreter.
 
-### II. Build from source
+## Thanks
 
-#### Clone this project
-
-```
-$ git clone https://github.com/divs1210/simple-stackless-lisp.git
-
-$ cd simple-stackless-lisp
-```
-
-#### Build a JAR
-
-Requires Java and Leiningen to be installed.
-
-```
-$ lein uberjar
-```
-
-#### Build a native executable
-
-Requires GraalVM and its native-image tool to be installed.
-
-```
-$ lein native-image
-```
+[Lisperator's technique](https://lisperator.net/pltut/cps-evaluator/) for building a stackless interpreter led me down this rabbit hole.
 
 ## License
 
