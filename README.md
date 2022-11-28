@@ -36,7 +36,7 @@ You can find pre-compiled executables [here](https://github.com/divs1210/simple-
 $ ./sclj
 ```
 
-**NOTE:** Running a REPL with `rlwrap` will lead to a much more pleasant experience:
+Use `rlwrap` for a more pleasant REPL experience:
 
 ```
 $ rlwrap ./sclj
