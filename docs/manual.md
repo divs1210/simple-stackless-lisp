@@ -68,7 +68,7 @@ Returns its argument unevaluated.
 
 ```clojure
 (quote undefined-symbol) ;; => undefined-symbol
-(quote (1 2 a "d" (+ 2 4))) ;=> (1 2 a "d" (+ 2 4))
+(quote (1 2 a "d" (+ 2 4))) ;; => (1 2 a "d" (+ 2 4))
 ```
 
 #### fn
