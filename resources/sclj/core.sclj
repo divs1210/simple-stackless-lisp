@@ -20,10 +20,6 @@
         args (rest form)]
     (apply m args)))
 
-(defmacro lazy-seq [exp]
-  (quote
-   (lazy-seq* (fn [] (unquote exp)))))
-
 (defn not [x]
   (if x false true))
 
@@ -36,8 +32,7 @@
     ys
     (if (empty? ys)
       xs
-      (lazy-seq
-       (cons (first xs)
-             (concat (rest xs) ys))))))
+      (cons (first xs)
+            (concat (rest xs) ys)))))
 
 (println (concat (list 1 2 3) (list 4 5)))
