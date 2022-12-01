@@ -57,6 +57,7 @@
    'first (->cps first)
    'rest  (->cps rest)
    'seq   (->cps seq)
+   'seq?  (->cps seq?)
    'cons  (->cps cons)
 
    'print   (->cps print)
@@ -73,9 +74,11 @@
      (f k (fn CC [_ ret]
             (k ret))))
 
-   '= (->cps =)
-   '< (->cps <)
-   '> (->cps >)
+   '=  (->cps =)
+
+   '== (->cps ==)
+   '<  (->cps <)
+   '>  (->cps >)
    '<= (->cps <=)
    '>= (->cps >=)
 
