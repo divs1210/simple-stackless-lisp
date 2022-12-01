@@ -19,8 +19,19 @@
 
 (defn run-repl []
   (let [env (env/fresh-env core/builtins)
-        k   #(println "=>" (pr-str %) "\n")
+        k   (fn [ret]
+              (env/bind! env '*1 ret)
+              (println "=>" (pr-str ret) "\n"))
         exe (u/executor)]
+    (env/bind! env
+               'load-file
+               (fn [k fname]
+                 (let [text (str "(do " (slurp fname) ")")
+                       code (edn/read-string text)]
+                   (core/eval code
+                              env
+                              k
+                              exe))))
     (println "============================")
     (println "|Simple Stackless Lisp REPL|")
     (println "============================")
