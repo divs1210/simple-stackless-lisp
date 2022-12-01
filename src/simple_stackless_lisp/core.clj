@@ -6,51 +6,54 @@
    [simple-stackless-lisp.util :as u :refer [->cps]]))
 
 (defn walk
-  [exp env k GUARD]
-  (GUARD walk [exp env k GUARD])
-  (cond
-    (or (number? exp)
-        (string? exp))
-    (k exp)
+  ([exp env k GUARD]
+   (walk walk exp env k GUARD))
+  ([this exp env k GUARD]
+   (GUARD this [exp env k GUARD])
+   (cond
+     (or (number? exp)
+         (string? exp))
+     (k exp)
 
-    (contains? #{nil true false} exp)
-    (k exp)
+     (contains? #{nil true false} exp)
+     (k exp)
 
-    (symbol? exp)
-    (k (env/lookup env exp))
+     (symbol? exp)
+     (k (env/lookup env exp))
 
-    (seq? exp)
-    (let [[op & args] exp]
-      (case op
-        def
-        (impl/k-def walk args env k GUARD)
+     (seq? exp)
+     (let [[op & args] exp]
+       (case op
+         def
+         (impl/k-def this args env k GUARD)
 
-        let
-        (impl/k-let walk args env k GUARD)
+         let
+         (impl/k-let this args env k GUARD)
 
-        if
-        (impl/k-if walk args env k GUARD)
+         if
+         (impl/k-if this args env k GUARD)
 
-        do
-        (impl/k-do walk args env k GUARD)
+         do
+         (impl/k-do this args env k GUARD)
 
-        quote
-        (impl/k-quote walk args env k GUARD)
+         quote
+         (impl/k-quote this args env k GUARD)
 
-        fn
-        (impl/k-fn walk [args false] env k GUARD)
+         fn
+         (impl/k-fn this [args false] env k GUARD)
 
-        macro
-        (impl/k-fn walk [args true] env k GUARD)
+         macro
+         (impl/k-fn this [args true] env k GUARD)
 
-        eval
-        (impl/k-eval walk args env k GUARD)
 
-        ;; function call
-        (impl/k-apply walk [op args] env k GUARD)))
+         eval
+         (impl/k-eval this args env k GUARD)
 
-    :else
-    (u/throw+ "Can't evaluate: " exp)))
+         ;; function call
+         (impl/k-apply this [op args] env k GUARD)))
+
+     :else
+     (u/throw+ "Can't evaluate: " exp))))
 
 (def builtins
   {'list  (->cps list)
