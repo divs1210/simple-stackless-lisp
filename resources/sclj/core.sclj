@@ -26,6 +26,19 @@
 (defn empty? [xs]
   (not (seq xs)))
 
+(defn reduce
+  [f acc xs]
+  (if (seq xs)
+    (reduce f (f acc (first xs)) (rest xs))
+    acc))
+
+(defn map
+  [f xs]
+  (if (seq xs)
+    (cons (f (first xs))
+          (map f (rest xs)))
+    nil))
+
 (defn concat
   [xs ys]
   (if (empty? xs)
@@ -35,4 +48,3 @@
       (cons (first xs)
             (concat (rest xs) ys)))))
 
-(println (concat (list 1 2 3) (list 4 5)))
