@@ -32,9 +32,11 @@
                               env
                               k
                               exe))))
-    (println "============================")
-    (println "|Simple Stackless Lisp REPL|")
-    (println "============================")
+    (println "=====================================================")
+    (println "|            Simple Stackless Lisp REPL             |")
+    (println "|---------------------------------------------------|")
+    (println "| https://github.com/divs1210/simple-stackless-lisp |")
+    (println "=====================================================")
     (while true
       (try
         (print "> ")
