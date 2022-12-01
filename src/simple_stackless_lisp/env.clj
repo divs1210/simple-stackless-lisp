@@ -15,8 +15,8 @@
 
 (defn top-level
   [env]
-  (if (::parent env)
-    (recur (::parent env))
+  (if (::parent @env)
+    (recur (::parent @env))
     env))
 
 (defn extend!
