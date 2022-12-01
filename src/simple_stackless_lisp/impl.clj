@@ -74,6 +74,29 @@
              fn-env (env/extend! env params)]
          (walk walk body-exp fn-env k GUARD)))))
 
+(defn k-trace!
+  [walk [code-exp] env k GUARD]
+  (let [top-level-env (env/top-level env)]
+    (when (not (::stack-depth @top-level-env))
+      (env/bind! top-level-env ::stack-depth (atom 0)))
+    (letfn [(tracing-walk [_ t-exp t-env t-k _]
+              (let [stack-depth (::stack-depth @top-level-env)]
+                (GUARD tracing-walk [tracing-walk t-exp t-env t-k GUARD])
+                (print (str/join (repeat @stack-depth "│")))
+                (prn t-exp)
+                (swap! stack-depth inc)
+                (walk tracing-walk
+                      t-exp
+                      t-env
+                      (fn t-k+ [ret]
+                        (GUARD t-k+ [ret])
+                        (swap! stack-depth dec)
+                        (print (str/join (repeat @stack-depth "│")))
+                        (print "└>")
+                        (prn ret)
+                        (t-k ret))
+                      GUARD)))]
+      (tracing-walk tracing-walk code-exp env k GUARD))))
 
 (defn k-eval
   [walk [code-exp] env k GUARD]

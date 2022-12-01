@@ -45,6 +45,8 @@
          macro
          (impl/k-fn this [args true] env k GUARD)
 
+         trace!
+         (impl/k-trace! this args env k GUARD)
 
          eval
          (impl/k-eval this args env k GUARD)
