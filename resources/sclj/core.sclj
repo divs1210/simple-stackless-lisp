@@ -26,12 +26,6 @@
 (defn empty? [xs]
   (not (seq xs)))
 
-(defmacro lazy-seq [exp]
-  (quote
-   (lazy-seq*
-    (fn []
-      (unquote exp)))))
-
 (defmacro if-let
   [bindings then else]
   (let [sym (first bindings)
@@ -49,43 +43,30 @@
     (reduce f (f acc (first xs)) (rest xs))
     acc))
 
-(defn dorun [xs]
-  (if-let [xs (seq xs)]
-    (dorun (next xs))
-    nil))
-
-(defn doall [xs]
-  (do
-    (dorun xs)
-    xs))
-
 (defn map
   [f xs]
-  (lazy-seq
-   (if-let [xs (seq xs)]
-     (cons (f (first xs))
-           (map f (rest xs)))
-     nil)))
+  (if-let [xs (seq xs)]
+    (cons (f (first xs))
+          (map f (rest xs)))
+    nil))
 
 (defn filter
   [f xs]
-  (lazy-seq
-   (if-let [xs (seq xs)]
-     (let [x (first xs)]
-       (if (f x)
-         (cons x (filter f (rest xs)))
-         (filter f (rest xs))))
-     nil)))
+  (if-let [xs (seq xs)]
+    (let [x (first xs)]
+      (if (f x)
+        (cons x (filter f (rest xs)))
+        (filter f (rest xs))))
+    nil))
 
 (defn concat
   [xs ys]
-  (lazy-seq
-   (if-let [xs (seq xs)]
-     (cons (first xs)
-           (concat (rest xs) ys))
-     ys)))
+  (if-let [xs (seq xs)]
+    (cons (first xs)
+          (concat (rest xs) ys))
+    ys))
 
-#_(let [l1 (lazy-seq (list 10 11 12))
+#_(let [l1 (list 10 11 12)
       l2 (cons 9 l1)
       l3 (concat l2 (list 13 14))
       l4 (map (fn [x] (+ x 1)) l3)]
