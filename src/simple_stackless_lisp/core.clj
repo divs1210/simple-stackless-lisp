@@ -6,8 +6,8 @@
    [simple-stackless-lisp.util :as u :refer [->cps]]))
 
 (defn walk
-  [this exp env k GUARD]
-  (GUARD this [this exp env k GUARD])
+  [this exp ns-reg k GUARD]
+  (GUARD this [this exp ns-reg k GUARD])
   (cond
     (or (number? exp)
         (string? exp))
@@ -17,40 +17,45 @@
     (k exp)
 
     (symbol? exp)
-    (k (env/lookup env exp))
+    (k (env/lookup (env/current-env ns-reg) exp))
 
     (seq? exp)
     (let [[op & args] exp]
       (case op
+        ns
+        (do
+          (env/create-ns! ns-reg (first args))
+          (k nil))
+
         def
-        (impl/k-def this args env k GUARD)
+        (impl/k-def this args ns-reg k GUARD)
 
         let
-        (impl/k-let this args env k GUARD)
+        (impl/k-let this args ns-reg k GUARD)
 
         if
-        (impl/k-if this args env k GUARD)
+        (impl/k-if this args ns-reg k GUARD)
 
         do
-        (impl/k-do this args env k GUARD)
+        (impl/k-do this args ns-reg k GUARD)
 
         quote
-        (impl/k-quote this args env k GUARD)
+        (impl/k-quote this args ns-reg k GUARD)
 
         fn
-        (impl/k-fn this [args false] env k GUARD)
+        (impl/k-fn this [args false] ns-reg k GUARD)
 
         macro
-        (impl/k-fn this [args true] env k GUARD)
+        (impl/k-fn this [args true] ns-reg k GUARD)
 
         trace!
-        (impl/k-trace! this args env k GUARD)
+        (impl/k-trace! this args ns-reg k GUARD)
 
         eval
-        (impl/k-eval this args env k GUARD)
+        (impl/k-eval this args ns-reg k GUARD)
 
         ;; function call
-        (impl/k-apply this [op args] env k GUARD)))
+        (impl/k-apply this [op args] ns-reg k GUARD)))
 
     :else
     (u/throw+ "Can't evaluate: " exp)))
@@ -93,11 +98,13 @@
 
 (defn eval
   ([exp]
-   (eval exp (env/fresh-env builtins)))
-  ([exp env]
-   (eval exp env identity))
-  ([exp env k]
-   (eval exp env k (u/executor)))
-  ([exp env k exe]
+   (let [ns-reg (env/fresh-ns-registry)]
+     (env/create-ns! ns-reg 'sclj.core builtins)
+     (eval exp ns-reg)))
+  ([exp ns-reg]
+   (eval exp ns-reg identity))
+  ([exp ns-reg k]
+   (eval exp ns-reg k (u/executor)))
+  ([exp ns-reg k exe]
    (let [{:keys [guard execute]} exe]
-     (execute walk [walk exp env k guard]))))
+     (execute walk [walk exp ns-reg k guard]))))

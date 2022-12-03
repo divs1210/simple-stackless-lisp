@@ -1,5 +1,6 @@
 (ns simple-stackless-lisp.main
   (:gen-class)
+  (:refer-clojure :exclude [eval])
   (:require
    [clojure.edn :as edn]
    [simple-stackless-lisp.core :as core]
@@ -18,20 +19,20 @@
       (spit "sclj-err-log.edn" (pr-str e)))))
 
 (defn run-repl []
-  (let [env (env/fresh-env core/builtins)
+  (let [ns-reg (env/fresh-ns-registry)
+        env (env/create-ns! ns-reg 'sclj.core core/builtins)
         k   (fn [ret]
               (env/bind! env '*1 ret)
               (println "=>" (pr-str ret) "\n"))
-        exe (u/executor)]
+        exe (u/executor)
+        eval (fn [exp k]
+               (core/eval exp ns-reg k exe))]
     (env/bind! env
                'load-file
                (fn [k fname]
                  (let [text (str "(do " (slurp fname) ")")
                        code (edn/read-string text)]
-                   (core/eval code
-                              env
-                              k
-                              exe))))
+                   (eval code k))))
     (println "=====================================================")
     (println "|            Simple Stackless Lisp REPL             |")
     (println "|---------------------------------------------------|")
@@ -39,12 +40,9 @@
     (println "=====================================================")
     (while true
       (try
-        (print "> ")
+        (print (str (::env/current-ns @ns-reg) "> "))
         (flush)
-        (core/eval (u/read-exp)
-                   env
-                   k
-                   exe)
+        (eval (u/read-exp) k)
         (catch Exception e
           (env/bind! env '*e e)
           (println "Error: " (.getMessage e)))))))

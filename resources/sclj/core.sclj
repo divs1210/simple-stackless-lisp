@@ -1,4 +1,4 @@
-;; (ns sclj.core)
+(ns sclj.core)
 
 (def defmacro
   (macro [mname argv body]
