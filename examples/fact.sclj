@@ -1,3 +1,6 @@
+(ns fact)
+(require sclj.core)
+
 (def fact
   (fn [n]
     (if (< n 2)

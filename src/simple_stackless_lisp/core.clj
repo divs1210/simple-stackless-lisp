@@ -27,6 +27,15 @@
           (env/create-ns! ns-reg (first args))
           (k nil))
 
+        require
+        (let [curr-env (env/current-env ns-reg)
+              required-ns (first args)
+              required-ns-env @(get @ns-reg required-ns)]
+          (swap! curr-env
+                 merge
+                 (dissoc required-ns-env ::env/parent))
+          (k nil))
+
         def
         (impl/k-def this args ns-reg k GUARD)
 
