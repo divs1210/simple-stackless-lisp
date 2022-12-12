@@ -5,14 +5,22 @@
    [clojure.edn :as edn]
    [simple-stackless-lisp.core :as core]
    [simple-stackless-lisp.env :as env]
-   [simple-stackless-lisp.util :as u]))
+   [simple-stackless-lisp.util :as u]
+   [clojure.java.io :as io]))
 
 (defn run-file
   [filename]
   (try
-    (let [text (str "(do " (slurp filename) ")")
-          code (edn/read-string text)]
-      (core/eval code))
+    (let [file (io/file filename)
+          _ (when-not (.exists file)
+              (u/throw+ "File not found:" filename))
+          cwd  (-> file .getAbsoluteFile .getParent)
+          text (str "(do " (slurp file) ")")
+          code (edn/read-string text)
+          ns-reg (env/fresh-ns-registry)
+          _ (env/create-ns! ns-reg 'sclj.core core/builtins)
+          _ (swap! ns-reg assoc ::env/current-wd cwd)]
+      (core/eval code ns-reg))
     (catch Exception e
       (println "Error: " (.getMessage e))
       (println "Writing error log to sclj-err-log.edn")

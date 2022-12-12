@@ -1,4 +1,5 @@
-(ns fact)
+(ns sample-project.core)
+
 (require sclj.core)
 
 (defn fact [n]

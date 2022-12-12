@@ -36,7 +36,11 @@
    (extend! nil initial-bindings)))
 
 (defn fresh-ns-registry []
-  (atom {::current-ns nil}))
+  (let [user-env (fresh-env {::ns 'user})]
+    (atom {::current-wd (System/getProperty "user.dir")
+           ::current-ns 'user
+           ::current-env user-env
+           'user user-env})))
 
 (defn create-ns!
   "Creates ns if it doesn't exist.
@@ -54,6 +58,10 @@
               ::current-env env)
        env)
      (get @registry name))))
+
+(defn current-ns
+  [ns-reg]
+  (::current-ns @ns-reg))
 
 (defn current-env
   [ns-reg]

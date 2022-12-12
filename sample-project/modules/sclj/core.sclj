@@ -1,0 +1,44 @@
+(ns sclj.core)
+
+(def defmacro
+  (macro [mname argv body]
+   (quote
+    (def (unquote mname)
+      (macro (unquote argv)
+        (unquote body))))))
+
+(defmacro defn
+  [fname argv body]
+  (quote
+   (def (unquote fname)
+     (fn (unquote argv)
+       (unquote body)))))
+
+(defn macroexpand-1
+  [form]
+  (let [m (eval (first form))
+        args (rest form)]
+    (apply m args)))
+
+(defn not [x]
+  (if x false true))
+
+(defn empty? [xs]
+  (not (seq xs)))
+
+(defmacro if-let
+  [bindings then else]
+  (let [sym (first bindings)
+        tst (first (rest bindings))
+        tmp (gensym)]
+    (quote
+     (let [(unquote tmp) (unquote tst)]
+       (if (unquote tmp)
+         (unquote then)
+         (unquote else))))))
+
+(defn reduce
+  [f acc xs]
+  (if-let [xs (seq xs)]
+    (reduce f (f acc (first xs)) (rest xs))
+    acc))
