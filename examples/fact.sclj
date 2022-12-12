@@ -7,6 +7,6 @@
       1
       (* n (fact (- n 1))))))
 
-(println "(fact 50000) =>")
+(println "(fact 5000) =>")
 
-(println (fact 50000))
+(println (fact 5000))
