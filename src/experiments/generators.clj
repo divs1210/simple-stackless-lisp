@@ -1,7 +1,6 @@
 (ns generators
   (:refer-clojure
-   :exclude [concat iterate range
-             map filter reduce sort])
+   :exclude [concat iterate range map filter reduce sort])
   (:require [clojure.core :as core]))
 
 (defn EMPTY []
@@ -78,16 +77,6 @@
         [val gen])
       [val EMPTY])))
 
-(defn sort
-  ([gen]
-   (sort EMPTY gen))
-  ([acc gen]
-   (let [[x next-gen] (gen)]
-     (if (not= ::end x)
-       (recur (insert-with #(< % x) x acc)
-              next-gen)
-       acc))))
-
 (defn reduce
   [f init gen]
   (let [[x next-gen] (gen)]
@@ -95,77 +84,31 @@
       (recur f (f init x) next-gen)
       init)))
 
+(defn sort
+  ([gen]
+   (reduce (fn [acc x]
+             (insert-with #(< % x) x acc))
+           EMPTY
+           gen)))
+
 (defn ->seq [gen]
   (lazy-seq
    (let [[x next-gen] (gen)]
      (when-not (= ::end x)
        (cons x (->seq next-gen))))))
 
-(comment
-  "TODO"
-
-  (defn GeneratorFn [map]
-    (let [X (:X map)]
-      (Fn {:ARG EmptyArray,
-           :RET (Pair {:FIRST (Or {:TYPES [X, (Literal {:VAL ::end})]})
-                       :LAST  (Generator {:X X})})})))
-
-  (def IGn
-    (Protocol [X]
-     {:next {:args [{:name this
-                     :type (GeneratorFn {:X X})}]}}))
-
-  (deftype Generator [X]
-    {:f {:type (GeneratorFn {:X X})}}
-
-    (IGn
-      (next [this]
-            (let [f (:f this)]
-              (f)))))
-
-  (def EMPTY
-    (Generator
-     {:X (Literal {:VAL ::end})}
-     {:f (Fn {}
-          {:args []
-           :body '(Pair {}
-                   {:first ::end
-                    :last 'EMPTY})})}))
-
-  (extend-protocols Generator
-
-   (IFn
-    (apply [this _]
-           (next this)))
-
-   (IListable
-    (->list [this]
-            (let [pair (this)
-                  x (:first pair)]
-              (when (not= ::end x)
-                (cons x (->list (:last pair)))))))
-
-   (ISeqable
-    (first [this])
-
-    (rest [this]))
-
-   (IArrayable
-    (->array [this]
-             (->array (->list this))))
-
-   (IStringable
-    (->str [_]
-           (str "#Generator{:x " x ", :next ...}"))))
-
-  )
-
 (comment "Benchmarks"
 
-  (def L (shuffle (core/range 1000)))
+  (defn bench [f]
+    (time (f)))
+
+  (def Ls (doall (repeatedly 10 #(shuffle (core/range 1000)))))
 
   (do "Array sort"
-    (time (first (core/sort L))))
+    (bench #(->> Ls
+                 (core/map core/sort)
+                 (core/map first)
+                 (core/reduce + 0))))
 
   (do "LazySeq sort"
     (defn lazy-insert-with
@@ -182,11 +125,17 @@
                 more)
          acc)))
     
-    (time (first (lazy-sort L))))
+    (bench #(->> Ls
+                 (core/map lazy-sort)
+                 (core/map first)
+                 (core/reduce + 0))))
 
   (do "Generator sort"
-    (def G (->gen (shuffle (core/range 1000))))
-    
-    (time (first ((sort G)))))
+    (def Gs (core/map ->gen Ls))
+
+    (bench #(->> Gs
+                 (core/map sort)
+                 (core/map (fn [g] (first (g))))
+                 (core/reduce + 0))))
 
   )
