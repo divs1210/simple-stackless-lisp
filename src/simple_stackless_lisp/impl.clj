@@ -14,7 +14,7 @@
   [walk args ns-reg k GUARD]
   (let [required-ns (first args)
         lib-path (str/split (name required-ns) #"\.")
-        cwd (::env/current-wd @ns-reg)
+        cwd (env/current-wd ns-reg)
         curr-ns (env/current-ns ns-reg)
         lib-file-path (str cwd "/"
                            "modules/"

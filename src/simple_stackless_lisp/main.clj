@@ -19,7 +19,7 @@
           code (edn/read-string text)
           ns-reg (env/fresh-ns-registry)
           _ (env/create-ns! ns-reg 'sclj.core core/builtins)
-          _ (swap! ns-reg assoc ::env/current-wd cwd)]
+          _ (env/set-current-wd! ns-reg cwd)]
       (core/eval code ns-reg))
     (catch Exception e
       (println "Error: " (.getMessage e))
@@ -48,7 +48,7 @@
     (println "=====================================================")
     (while true
       (try
-        (print (str (::env/current-ns @ns-reg) "> "))
+        (print (str (env/current-ns env) "> "))
         (flush)
         (eval (u/read-exp) k)
         (catch Exception e

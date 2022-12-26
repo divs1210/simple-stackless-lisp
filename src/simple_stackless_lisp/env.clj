@@ -59,6 +59,10 @@
        env)
      (get @registry name))))
 
+(defn current-wd
+  [ns-reg]
+  (::current-wd @ns-reg))
+
 (defn current-ns
   [ns-reg]
   (::current-ns @ns-reg))
@@ -67,8 +71,12 @@
   [ns-reg]
   (::current-env @ns-reg))
 
+(defn set-current-wd!
+  [ns-reg cwd]
+  (swap! ns-reg assoc ::current-wd cwd)
+  nil)
+
 (defn set-current-env!
   [ns-reg env]
-  (swap! ns-reg assoc
-         ::current-env env)
+  (swap! ns-reg assoc ::current-env env)
   env)
