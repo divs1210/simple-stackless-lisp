@@ -55,7 +55,7 @@
         eval
         (impl/k-eval this args ns-reg k GUARD)
 
-        ;; function call
+        ;; function/macro call
         (impl/k-apply this [op args] ns-reg k GUARD)))
 
     :else
