@@ -50,15 +50,19 @@
   ([registry name]
    (create-ns! registry name {}))
   ([registry name initial-bindings]
-   (if-not (contains? @registry name)
+   (if (contains? @registry name)
+     (let [env (get @registry name)]
+       (swap! registry assoc
+              ::current-ns name
+              ::current-env env)
+       env)
      (let [bindings (assoc initial-bindings ::ns name)
            env (fresh-env bindings)]
        (swap! registry assoc
               name env
               ::current-ns name
               ::current-env env)
-       env)
-     (get @registry name))))
+       env))))
 
 (defn current-wd
   [ns-reg]
