@@ -104,6 +104,7 @@
   ([exp]
    (let [ns-reg (env/fresh-ns-registry)]
      (env/create-ns! ns-reg 'sclj.core builtins)
+     (env/create-ns! ns-reg 'user)
      (eval exp ns-reg)))
   ([exp ns-reg]
    (eval exp ns-reg identity))
