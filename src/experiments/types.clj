@@ -1,30 +1,82 @@
 (ns experiments.types)
 
 (comment
-  
-  (defproto apply [f args])
 
-  (deftype Fn [argv body]
-    (core/apply [_ args]
-      (with-extended-env (zipmap argv args)
-        (eval body)))
-    (core/->str [_]
-      (str "(fn " ~argv ~body ")")))
+  ;; Numbers
+  ;; =======
+  (deftype core/Number [val])
 
-  (defproto + [x y])
+  ;; (def Type
+  ;;   {:type (var Type)
+  ;;    :val  (var Type)})
+  ;;
+  ;; (defmacro deftype [name argv]
+  ;;   `(do
+  ;;      (def ~name
+  ;;        {:type Type
+  ;;         :val  (var ~name)})
+  ;;      (defn ~(symbol (str "->" name)) [& args]
+  ;;        {:type ~name
+  ;;         :val  ~(zipmap argv args)})))
+  ;;
+  ;; > 1
+  ;; => {:type core/Number
+  ;;     :val 1}
+  ;;
+  ;; > core/Number
+  ;; => {:type core/Type
+  ;;     :val {:name 'Number}}
+  ;;
+  ;; > core/Type
+  ;; => {:type core/Type
+  ;;     :val {:name 'Type}}
 
-  (deftype Complex [a b]
-    (core/+ [_ that]
-      (Complex [(+ a (:a that)) (+ b (:b that))]))
-    (core/->str [_]
-      (str "#Complex{:a " a ", :b " b "}")))
+  (defmulti core/+ [this that]
+    [(:type this) (:type that)])
+
+  ;; (defmacro defmulti [name argv dispatch-body]
+  ;;   `(do
+  ;;      (def ~(symbol (str name "-dispatch-table"))
+  ;;        (atom {}))
+  ;;      (defn ~name [& args]
+  ;;        (let [dispatch-fn (fn ~argv ~dispatch-body)
+  ;;              dispatch-val (core/apply dispatch-fn args)
+  ;;              target-fn (get ~(symbol (str name "-dispatch-table")) dispatch-val)]
+  ;;          (apply target-fn args)))))
+
+  (defmethod core/+
+    [core/Number core/Number]
+    [a b]
+    (core/Number (bultin/+ (:val a) (:val b))))
+
+  ;; (defmacro defmethod [multiname dispatch-val argv body]
+  ;;  `(swap! ~(symbol (str multiname "-dispatch-table"))
+  ;;          assoc ~dispatch-val (fn ~argv ~body)))
+
+  (deftype ComplexNumber [real imag])
+
+  ;; > (ComplexNumber 1 -2)
+  ;; => {:type ComplexNumber
+  ;;     :val {:real {:type core/Number :val 1}
+  ;;           :imag {:type core/Number :val -2}}}
+
+  (defmethod core/+
+    [ComplexNumber ComplexNumber]
+    [a b]
+    (ComplexNumber (core/+ (-> a :val :real) (-> b :val :real))
+                   (core/+ (-> a :val :imag) (-> b :val :imag))))
+
+  ;; Functions
+  ;; =========
+  (deftype core/Fn [argv body])
+
+  (defmulti core/apply [f args]
+    (:type f))
+
+  (defmethod core/apply core/Fn
+    [f args]
+    (eval
+     `(let ~(vec (zipmap (:argv f) args))
+        (:body f))))
 
   )
-
-"
-- protocols are like one-method-interfaces
-- are implemented on a per-object basis
-- dispatch to the relevant function in the first parameter
-
-Type checking will be solely based on predicates.
-"
