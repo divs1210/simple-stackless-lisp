@@ -3,9 +3,7 @@
   (:require
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.impl :as impl]
-   [simple-stackless-lisp.util :as u :refer [->cps]]
-   [clojure.string :as str]
-   [clojure.edn :as edn]))
+   [simple-stackless-lisp.util :as u :refer [->cps]]))
 
 (defn walk
   [this exp ns-reg k GUARD]
@@ -25,34 +23,10 @@
     (let [[op & args] exp]
       (case op
         ns
-        (do
-          (env/create-ns! ns-reg (first args))
-          (k nil))
+        (impl/k-ns ns-reg args k)
 
         require
-        (let [required-ns (first args)
-              lib-path (str/split (name required-ns) #"\.")
-              cwd (::env/current-wd @ns-reg)
-              curr-ns (env/current-ns ns-reg)
-              lib-file-path (str cwd "/"
-                                 "modules/"
-                                 (str/join "/" lib-path)
-                                 ".sclj")
-              lib-text (str "(do\n"
-                            (slurp lib-file-path) "\n"
-                            "(ns " curr-ns  "))")
-              lib-code (edn/read-string lib-text)]
-          (this this
-                lib-code
-                ns-reg
-                (fn CC [_]
-                  (GUARD CC [nil])
-                  (let [curr-env (env/current-env ns-reg)
-                        required-ns-env @(get @ns-reg required-ns)]
-                    (swap! curr-env merge
-                           (dissoc required-ns-env ::env/parent))
-                    (k nil)))
-                GUARD))
+        (impl/k-require this args ns-reg k GUARD)
 
         def
         (impl/k-def this args ns-reg k GUARD)

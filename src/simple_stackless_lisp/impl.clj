@@ -1,8 +1,40 @@
 (ns simple-stackless-lisp.impl
-  (:require [clojure.walk :refer [postwalk]]
-            [simple-stackless-lisp.env :as env]
-            [simple-stackless-lisp.util :as u]
-            [clojure.string :as str]))
+  (:require
+   [clojure.edn :as edn]
+   [clojure.string :as str]
+   [clojure.walk :refer [postwalk]]
+   [simple-stackless-lisp.env :as env]
+   [simple-stackless-lisp.util :as u]))
+
+(defn k-ns [ns-reg args k]
+  (env/create-ns! ns-reg (first args))
+  (k nil))
+
+(defn k-require
+  [walk args ns-reg k GUARD]
+  (let [required-ns (first args)
+        lib-path (str/split (name required-ns) #"\.")
+        cwd (::env/current-wd @ns-reg)
+        curr-ns (env/current-ns ns-reg)
+        lib-file-path (str cwd "/"
+                           "modules/"
+                           (str/join "/" lib-path)
+                           ".sclj")
+        lib-text (str "(do\n"
+                      (slurp lib-file-path) "\n"
+                      "(ns " curr-ns  "))")
+        lib-code (edn/read-string lib-text)]
+    (walk walk
+          lib-code
+          ns-reg
+          (fn CC [_]
+            (GUARD CC [nil])
+            (let [curr-env (env/current-env ns-reg)
+                  required-ns-env @(get @ns-reg required-ns)]
+              (swap! curr-env merge
+                     (dissoc required-ns-env ::env/parent))
+              (k nil)))
+          GUARD)))
 
 (defn k-def
   [walk args ns-reg k GUARD]
