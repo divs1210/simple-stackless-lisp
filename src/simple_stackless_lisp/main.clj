@@ -35,12 +35,6 @@
         exe (u/executor)
         eval (fn [exp k]
                (core/eval exp ns-reg k exe))]
-    (env/bind! env
-               'load-file
-               (fn [k fname]
-                 (let [text (str "(do " (slurp fname) ")")
-                       code (edn/read-string text)]
-                   (eval code k))))
     (println "=====================================================")
     (println "|            Simple Stackless Lisp REPL             |")
     (println "|---------------------------------------------------|")

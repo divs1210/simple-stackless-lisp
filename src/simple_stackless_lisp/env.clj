@@ -40,6 +40,7 @@
     (atom {::current-wd (System/getProperty "user.dir")
            ::current-ns 'user
            ::current-env user-env
+           ::loaded-files #{}
            'user user-env})))
 
 (defn create-ns!
@@ -80,3 +81,7 @@
   [ns-reg env]
   (swap! ns-reg assoc ::current-env env)
   env)
+
+(defn file-loaded?
+  [ns-reg filename]
+  (contains? (::loaded-files @ns-reg) filename))

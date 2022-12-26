@@ -10,31 +10,40 @@
   (env/create-ns! ns-reg (first args))
   (k nil))
 
+(defn k-load-file!
+  [walk filename ns-reg k GUARD]
+  (let [cwd (env/current-wd ns-reg)
+        text (str "(do " (slurp (str cwd "/" filename)) ")")
+        code (edn/read-string text)]
+    (walk walk code ns-reg k GUARD)))
+
+(defn k-load-ns-file!
+  [walk required-ns ns-reg k GUARD]
+  (GUARD walk [required-ns ns-reg k GUARD])
+  (let [lib-path (str/split (name required-ns) #"\.")
+        lib-file-path (str "modules/" (str/join "/" lib-path) ".sclj")
+        curr-ns (env/current-ns ns-reg)
+        on-load (fn CC [_]
+                  (GUARD CC [nil])
+                  (env/create-ns! ns-reg curr-ns)
+                  (swap! ns-reg update ::loaded-files conj lib-file-path)
+                  (k nil))]
+    (if-not (env/file-loaded? ns-reg lib-file-path)
+      (k-load-file! walk lib-file-path ns-reg on-load GUARD)
+      (k nil))))
+
 (defn k-require
   [walk args ns-reg k GUARD]
+  (GUARD k-require [walk args ns-reg k GUARD])
   (let [required-ns (first args)
-        lib-path (str/split (name required-ns) #"\.")
-        cwd (env/current-wd ns-reg)
-        curr-ns (env/current-ns ns-reg)
-        lib-file-path (str cwd "/"
-                           "modules/"
-                           (str/join "/" lib-path)
-                           ".sclj")
-        lib-text (str "(do\n"
-                      (slurp lib-file-path) "\n"
-                      "(ns " curr-ns  "))")
-        lib-code (edn/read-string lib-text)]
-    (walk walk
-          lib-code
-          ns-reg
-          (fn CC [_]
-            (GUARD CC [nil])
-            (let [curr-env (env/current-env ns-reg)
-                  required-ns-env @(get @ns-reg required-ns)]
-              (swap! curr-env merge
-                     (dissoc required-ns-env ::env/parent))
-              (k nil)))
-          GUARD)))
+        curr-env (env/current-env ns-reg)
+        then (fn CC [_]
+               (GUARD CC [nil])
+               (let [required-ns-env @(get @ns-reg required-ns)]
+                 (swap! curr-env merge
+                        (dissoc required-ns-env ::env/parent))
+                 (k nil)))]
+    (k-load-ns-file! walk required-ns ns-reg then GUARD)))
 
 (defn k-def
   [walk args ns-reg k GUARD]

@@ -25,6 +25,9 @@
         ns
         (impl/k-ns ns-reg args k)
 
+        load-file!
+        (impl/k-load-file! this (first args) ns-reg k GUARD)
+
         require
         (impl/k-require this args ns-reg k GUARD)
 
@@ -55,7 +58,7 @@
         eval
         (impl/k-eval this args ns-reg k GUARD)
 
-        ;; function/macro call
+        ;; DEFAULT: function/macro call
         (impl/k-apply this [op args] ns-reg k GUARD)))
 
     :else
