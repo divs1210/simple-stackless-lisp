@@ -73,9 +73,14 @@
      (fn CC [k & args]
        (GUARD CC (cons k args))
        (let [params (zipmap argv args)
-             fn-env (env/extend! (env/current-env ns-reg) params)]
+             curr-env (env/current-env ns-reg)
+             fn-env (env/extend! curr-env params)
+             k+ (fn CC+ [res]
+                  (GUARD CC+ [res])
+                  (env/set-current-env! ns-reg curr-env)
+                  (k res))]
          (env/set-current-env! ns-reg fn-env)
-         (walk walk body-exp ns-reg k GUARD)))))
+         (walk walk body-exp ns-reg k+ GUARD)))))
 
 (defn k-trace!
   [walk [code-exp] ns-reg k GUARD]
