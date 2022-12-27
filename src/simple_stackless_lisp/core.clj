@@ -6,8 +6,8 @@
    [simple-stackless-lisp.util :as u :refer [->cps]]))
 
 (defn walk
-  [exp env k GUARD]
-  (GUARD walk [exp env k GUARD])
+  [this exp env k GUARD]
+  (GUARD walk [this exp env k GUARD])
   (cond
     (or (number? exp)
         (string? exp))
@@ -23,31 +23,34 @@
     (let [[op & args] exp]
       (case op
         def
-        (impl/k-def walk args env k GUARD)
+        (impl/k-def this args env k GUARD)
 
         let
-        (impl/k-let walk args env k GUARD)
+        (impl/k-let this args env k GUARD)
 
         if
-        (impl/k-if walk args env k GUARD)
+        (impl/k-if this args env k GUARD)
 
         do
-        (impl/k-do walk args env k GUARD)
+        (impl/k-do this args env k GUARD)
 
         quote
-        (impl/k-quote walk args env k GUARD)
+        (impl/k-quote this args env k GUARD)
 
         fn
-        (impl/k-fn walk [args false] env k GUARD)
+        (impl/k-fn this [args false] env k GUARD)
 
         macro
-        (impl/k-fn walk [args true] env k GUARD)
+        (impl/k-fn this [args true] env k GUARD)
+
+        trace!
+        (impl/k-trace! this args env k GUARD)
 
         eval
-        (impl/k-eval walk args env k GUARD)
+        (impl/k-eval this args env k GUARD)
 
-        ;; function call
-        (impl/k-apply walk [op args] env k GUARD)))
+        ;; function / macro call
+        (impl/k-apply this [op args] env k GUARD)))
 
     :else
     (u/throw+ "Can't evaluate: " exp)))
@@ -93,4 +96,4 @@
    (eval exp env k (u/executor)))
   ([exp env k exe]
    (let [{:keys [guard execute]} exe]
-     (execute walk [exp env k guard]))))
+     (execute walk [walk exp env k guard]))))
