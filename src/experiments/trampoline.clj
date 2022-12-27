@@ -1,4 +1,4 @@
-(ns trampoline
+(ns experiments.trampoline
   (:refer-clojure :exclude [trampoline]))
 
 (deftype Thunk [f source]

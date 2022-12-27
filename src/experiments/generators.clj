@@ -1,4 +1,4 @@
-(ns generators
+(ns experiments.generators
   (:refer-clojure
    :exclude [concat iterate range map filter reduce sort])
   (:require [clojure.core :as core]))
