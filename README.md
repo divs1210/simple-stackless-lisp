@@ -9,18 +9,18 @@ This is a **Work In Progress**, and there is [more to come](docs/vision.md)!
 ## Example
 
 ```clojure
-;; examples/fact.sclj
+;; sample-project/fact.sclj
 (def fact
   (fn [n]
     (if (< n 2)
       1
       (* n (fact (- n 1))))))
 
-(println "(fact 50000) =>")
-(println (fact 50000))
+(println "(fact 5000) =>")
+(println (fact 5000))
 ```
 
-More [code examples](examples/) are available.
+More [code examples](sample-project/) are available.
 
 There's also a [User Manual](docs/manual.md).
 
@@ -29,6 +29,13 @@ There's also a [User Manual](docs/manual.md).
 ### Download
 
 You can find pre-compiled executables [here](https://github.com/divs1210/simple-stackless-lisp/releases/latest).
+
+```
+Note:
+=====
+Run the REPL/files inside the sample-project directory.
+The interpreter looks inside sample-project/modules for core namespaces.
+```
 
 ### Start a REPL
 

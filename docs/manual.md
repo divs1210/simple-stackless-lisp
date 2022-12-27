@@ -27,6 +27,9 @@ Binds a symbol to a value in the top-level (global) environment.
 
 (def b 2)
 
+;; to access builtin functions like +, <, println, etc.
+(require sclj.core)
+
 (def c (+ a b))
 
 c ;; => 3
