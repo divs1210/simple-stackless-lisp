@@ -2,6 +2,7 @@
   (:gen-class)
   (:require
    [clojure.edn :as edn]
+   [simple-stackless-lisp.builtins :as b]
    [simple-stackless-lisp.core :as core]
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.util :as u]))
@@ -16,7 +17,7 @@
   (println "============================")
   (println "|Simple Stackless Lisp REPL|")
   (println "============================")
-  (let [env (env/fresh-env core/builtins)
+  (let [env (env/fresh-env b/builtins)
         k   (fn [ret]
               (env/bind! env '%1 ret)
               (println "=>" (pr-str ret) "\n"))
