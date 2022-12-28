@@ -72,6 +72,7 @@
      (fn CC [k & args]
        (GUARD CC (cons k args))
        (let [params (zipmap argv args)
+             params (assoc params '%args (vec args))
              fn-env (env/extend! env params)]
          (walk walk body-exp fn-env k GUARD)))))
 
