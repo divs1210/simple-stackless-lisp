@@ -72,6 +72,7 @@
    'Number  'Number
    'String  'String
    'Symbol  'Symbol
+   'Keyword 'Keyword
    'Fn      'Fn
 
    ;; Arrays
@@ -102,6 +103,22 @@
    'vector-slice  (->cps t/vector-slice)
    'vector-put    (->cps t/vector-put)
    'vector-insert (->cps t/vector-insert)
+
+   ;; Mutable Hashmaps
+   ;; ================
+   'MutableHashMap          'MutableHashMap
+   'mutable-hash-map        (->cps t/mutable-hash-map)
+   'mutable-hash-map-size   (->cps t/mutable-hash-map-size)
+   'mutable-hash-map-get    (->cps t/mutable-hash-map-get)
+   'mutable-hash-map-put!   (->cps t/mutable-hash-map-put!)
+
+   ;; Immutable Hashmaps
+   ;; ==================
+   'HashMap       'HashMap
+   'hash-map      (->cps hash-map)
+   'hash-map-size (->cps t/hash-map-size)
+   'hash-map-get  (->cps t/hash-map-get)
+   'hash-map-put! (->cps t/hash-map-put)
 
    ;; I/O
    ;; ===
