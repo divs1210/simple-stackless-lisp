@@ -86,6 +86,11 @@
      (f k (fn CC [_ ret]
             (k ret))))
 
+   'throw!
+   (fn [k m]
+     (throw (ex-info (:msg m) m))
+     (k nil))
+
    ;; Logic
    ;; =====
    '= (->cps =)
