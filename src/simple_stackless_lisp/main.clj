@@ -13,20 +13,19 @@
     (core/eval code)))
 
 (defn run-repl []
+  (println "============================")
+  (println "|Simple Stackless Lisp REPL|")
+  (println "============================")
   (let [env (env/fresh-env core/builtins)
-        k   #(println "=>" (pr-str %) "\n")
+        k   (fn [ret]
+              (env/bind! env '%1 ret)
+              (println "=>" (pr-str ret) "\n"))
         exe (u/executor)]
-    (println "============================")
-    (println "|Simple Stackless Lisp REPL|")
-    (println "============================")
     (while true
       (try
         (print "> ")
         (flush)
-        (core/eval (u/read-exp)
-                   env
-                   k
-                   exe)
+        (core/eval (u/read-exp) env k exe)
         (catch Exception e
           (env/bind! env '*e e)
           (println "Error: " (.getMessage e)))))))
