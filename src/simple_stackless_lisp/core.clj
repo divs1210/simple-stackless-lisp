@@ -11,7 +11,8 @@
   (GUARD walk [this exp env k GUARD])
   (cond
     (or (number? exp)
-        (string? exp))
+        (string? exp)
+        (keyword? exp))
     (k exp)
 
     (contains? #{nil true false} exp)
