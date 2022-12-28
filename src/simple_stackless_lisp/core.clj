@@ -3,6 +3,7 @@
   (:require
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.impl :as impl]
+   [simple-stackless-lisp.types :as t]
    [simple-stackless-lisp.util :as u :refer [->cps]]))
 
 (defn walk
@@ -56,16 +57,52 @@
     (u/throw+ "Can't evaluate: " exp)))
 
 (def builtins
-  {'list  (->cps list)
-   'first (->cps first)
-   'rest  (->cps rest)
-   'seq   (->cps seq)
-   'cons  (->cps cons)
+  {;; Types
+   ;; =====
+   'type (->cps t/type)
 
+   'instance?
+   (fn [k t obj]
+     (k (= t (t/type obj))))
+
+   ;; Primitives
+   ;; ==========
+   'Nil     'Nil
+   'Boolean 'Boolean
+   'Number  'Number
+   'String  'String
+   'Symbol  'Symbol
+   'Fn      'Fn
+
+   ;; Arrays
+   ;; ======
+   'Array         'Array
+   'array         (->cps t/array)
+   'array-size    (->cps t/array-size)
+   'array-get     (->cps t/array-get)
+   'array-slice   (->cps t/array-slice)
+   'array-set!    (->cps t/array-set!)
+   'array-insert! (->cps t/array-insert!)
+
+   ;; Vectors
+   ;; =======
+   'Vector        'Vector
+   'vector        (->cps vector)
+   'vector-size   (->cps t/vector-size)
+   'vector-get    (->cps t/vector-get)
+   'vector-slice  (->cps t/vector-slice)
+   'vector-set    (->cps t/vector-set)
+   'vector-insert (->cps t/vector-insert)
+
+   ;; I/O
+   ;; ===
    'print   (->cps print)
    'println (->cps println)
 
-   'gensym (->cps gensym)
+   ;; Misc
+   ;; ====
+   'identical? (->cps identical?)
+   'gensym     (->cps gensym)
 
    'apply
    (fn [k f args]
@@ -76,12 +113,16 @@
      (f k (fn CC [_ ret]
             (k ret))))
 
+   ;; Logic
+   ;; =====
    '= (->cps =)
    '< (->cps <)
    '> (->cps >)
    '<= (->cps <=)
    '>= (->cps >=)
 
+   ;; Math
+   ;; ====
    '+ (->cps +')
    '- (->cps -)
    '* (->cps *')
