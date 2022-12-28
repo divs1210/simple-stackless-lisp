@@ -3,7 +3,7 @@
   (:require
    [simple-stackless-lisp.util :as u])
   (:import
-   (clojure.lang PersistentVector)
+   (clojure.lang IPersistentMap PersistentVector)
    (java.util Collection Vector)))
 
 ;; Types
@@ -12,15 +12,16 @@
 
 (defn type [obj]
   (cond
+    (number?  obj) 'Number
+    (fn?      obj) 'Fn
     (nil?     obj) 'Nil
     (boolean? obj) 'Boolean
-    (number?  obj) 'Number
     (string?  obj) 'String
     (symbol?  obj) 'Symbol
-    (fn?      obj) 'Fn
     (array?   obj) 'Array
     (vector?  obj) 'Vector
-    :else (u/throw+ "Don't know type of: " obj)))
+    :else (or (-> obj meta :type)
+              (u/throw+ "Don't know type of: " obj))))
 
 ;; Arrays
 ;; ======
@@ -45,7 +46,7 @@
   [^Vector array from to]
   (Vector. (.subList array from to)))
 
-(defn array-set!
+(defn array-put!
   [^Vector array idx val]
   (.set array idx val)
   array)
@@ -54,6 +55,68 @@
   [^Vector array idx val]
   (.add array idx val)
   array)
+
+
+;; Array Windows
+;; =============
+(defn array-window
+  [^Vector array from to]
+  (locking array
+    (let [size (.size array)]
+      (assert (<= from to))
+      (assert (<= 0 from (dec size)))
+      (assert (<= 0 to size)))
+    ^{:type 'ArrayWindow}
+    {:array array
+     :from  from
+     :to    to}))
+
+(defn- check-window-overflow
+  [window min-idx idx max-idx]
+  (let [{:keys [^Vector array from]} window
+        size (.size array)]
+    (assert (<= min-idx idx max-idx)
+            (str "ArrayWindow overflow!\n"
+                 "array-size: " size "\n"
+                 "window-idx: " (- idx from) "\n"
+                 "array-idx:  " idx))))
+
+(defn array-window-size
+  [^IPersistentMap window]
+  (let [{:keys [from to]} window]
+    (if (= to from)
+      0
+      (- to from))))
+
+(defn array-window-get
+  [^IPersistentMap window idx]
+  (let [{:keys [^Vector array from to]} window]
+    (locking array
+      (let [size  (array-size array)
+            from' (min from size)
+            idx'  (+ from idx)
+            to'   (min (dec to) (dec size))]
+        (check-window-overflow window from' idx' to')
+        (.get array idx')))))
+
+(defn array-window-slice
+  [^IPersistentMap window from to]
+  (array-window (:array window)
+                (+ from (:from window))
+                (+ to   (:from window))))
+
+(defn array-window-put!
+  [^IPersistentMap window idx val]
+  (let [{:keys [^Vector array from to]} window]
+    (locking array
+      (let [size  (array-size array)
+            from' (min from size)
+            idx'  (+ from idx)
+            to'   (min (dec to) (dec size))]
+        (check-window-overflow window from' idx' to')
+        (array-put! array idx' val)
+        window))))
+
 
 ;; Vectors
 ;; =======
@@ -70,7 +133,7 @@
   [^PersistentVector v from to]
   (subvec v from to))
 
-(defn vector-set
+(defn vector-put
   [^PersistentVector v idx val]
   (assoc v idx val))
 

@@ -81,8 +81,17 @@
    'array-size    (->cps t/array-size)
    'array-get     (->cps t/array-get)
    'array-slice   (->cps t/array-slice)
-   'array-set!    (->cps t/array-set!)
+   'array-put!    (->cps t/array-put!)
    'array-insert! (->cps t/array-insert!)
+
+   ;; Array Windows
+   ;; =============
+   'ArrayWindow        'ArrayWindow
+   'array-window       (->cps t/array-window)
+   'array-window-size  (->cps t/array-size)
+   'array-window-get   (->cps t/array-window-get)
+   'array-window-slice (->cps t/array-window-slice)
+   'array-window-put!  (->cps t/array-window-put!)
 
    ;; Vectors
    ;; =======
@@ -91,7 +100,7 @@
    'vector-size   (->cps t/vector-size)
    'vector-get    (->cps t/vector-get)
    'vector-slice  (->cps t/vector-slice)
-   'vector-set    (->cps t/vector-set)
+   'vector-put    (->cps t/vector-put)
    'vector-insert (->cps t/vector-insert)
 
    ;; I/O
