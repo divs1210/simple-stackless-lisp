@@ -110,6 +110,37 @@
   (let [impls (methods multi)]
     (get impls dispatch-val (:MultiMethod/default impls))))
 
+;; Primitive multimethods
+;; ======================
+(def k-to-string
+  (k-multi identity "->str"
+   (fn [k obj]
+     (k (t/type obj)))))
+
+(k-method identity k-to-string :MultiMethod/default
+  (fn [k _ obj]
+    (k (str obj))))
+
+(k-method identity k-to-string 'Nil
+  (fn [k n]
+    (k "nil")))
+
+(k-method identity k-to-string 'Fn
+  (fn [k f]
+    (k (str "#Fn"))))
+
+(k-method identity k-to-string 'MultiMethod
+  (fn [k m]
+    (let [info (multi-display-info m)
+          info-str (k-to-string identity info)]
+      (k (str "#MultiMethod" info-str)))))
+
+(k-method identity k-to-string 'MutableHashMap
+  (fn [k m]
+    (k-to-string k (t/mutable-hash-map-snapshot m))))
+
+;; Core library
+;; ============
 (def builtins
   {;; Types
    ;; =====
@@ -215,4 +246,8 @@
    '+ (->cps +')
    '- (->cps -)
    '* (->cps *')
-   '/ (->cps /)})
+   '/ (->cps /)
+
+   ;; Strings
+   ;; =======
+   '->str k-to-string})

@@ -20,7 +20,7 @@
   (let [env (env/fresh-env b/builtins)
         k   (fn [ret]
               (env/bind! env '%1 ret)
-              (println "=>" (pr-str ret) "\n"))
+              (println "=>" (b/k-to-string identity ret) "\n"))
         exe (u/executor)]
     (while true
       (try
