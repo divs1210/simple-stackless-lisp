@@ -4,7 +4,11 @@ A small but powerful Clojure-like Lisp.
 
 Has first class continuations and macros.
 
+Data oriented and [super polymorphic](examples/polymorphism.sclj).
+
 This is a **Work In Progress**, and there is [more to come](docs/vision.md)!
+
+**NOTE:** Docs might not always be up to date, dince the language is in heavy development.
 
 ## Example
 
