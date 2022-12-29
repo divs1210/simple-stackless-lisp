@@ -1,5 +1,5 @@
 (ns simple-stackless-lisp.types
-  (:refer-clojure :exclude [type])
+  (:refer-clojure :exclude [type instance?])
   (:require
    [clojure.core :as core]
    [simple-stackless-lisp.util :as u])
@@ -35,6 +35,10 @@
     (map?         obj) 'HashMap
     :else (u/throw+ "Don't know type of: " obj)))
 
+(defn instance?
+  [t obj]
+  (= t (type obj)))
+
 ;; Arrays
 ;; ======
 ;; backed by Java's Vectors
@@ -44,7 +48,7 @@
 
 (defn array?
   [^Object obj]
-  (instance? Vector obj))
+  (core/instance? Vector obj))
 
 (defn array-size
   [^Vector array]

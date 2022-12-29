@@ -100,7 +100,8 @@
 (def builtins
   {;; Types
    ;; =====
-   'type   (->cps t/type)
+   'type      (->cps t/type)
+   'instance? (->cps t/instance?)
 
    'multi   k-multi
    'method  k-method
@@ -111,21 +112,18 @@
    'methods            (->cps methods)
    'implementation?    (->cps implementation?)
 
-   'instance?
-   (fn [k t obj]
-     (k (= t (t/type obj))))
-
-   'MethodNotFoundError 'MethodNotFoundError
-
    ;; Primitives
    ;; ==========
-   'Nil     'Nil
-   'Boolean 'Boolean
-   'Number  'Number
-   'String  'String
-   'Symbol  'Symbol
-   'Keyword 'Keyword
-   'Fn      'Fn
+   'Nil         'Nil
+   'Boolean     'Boolean
+   'Number      'Number
+   'String      'String
+   'Symbol      'Symbol
+   'Keyword     'Keyword
+   'Fn          'Fn
+   'MultiMethod 'MultiMethod
+
+   'MethodNotFoundError 'MethodNotFoundError
 
    ;; Arrays
    ;; ======
