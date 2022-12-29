@@ -2,6 +2,7 @@
   (:gen-class)
   (:require
    [clojure.edn :as edn]
+   [simple-stackless-lisp.builtins :as b]
    [simple-stackless-lisp.core :as core]
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.util :as u]))
@@ -13,20 +14,19 @@
     (core/eval code)))
 
 (defn run-repl []
-  (let [env (env/fresh-env core/builtins)
-        k   #(println "=>" (pr-str %) "\n")
+  (println "============================")
+  (println "|Simple Stackless Lisp REPL|")
+  (println "============================")
+  (let [env (env/fresh-env b/builtins)
+        k   (fn [ret]
+              (env/bind! env '%1 ret)
+              (println "=>" (pr-str ret) "\n"))
         exe (u/executor)]
-    (println "============================")
-    (println "|Simple Stackless Lisp REPL|")
-    (println "============================")
     (while true
       (try
         (print "> ")
         (flush)
-        (core/eval (u/read-exp)
-                   env
-                   k
-                   exe)
+        (core/eval (u/read-exp) env k exe)
         (catch Exception e
           (env/bind! env '*e e)
           (println "Error: " (.getMessage e)))))))

@@ -1,16 +1,18 @@
 (ns simple-stackless-lisp.core
   (:refer-clojure :exclude [eval])
   (:require
+   [simple-stackless-lisp.builtins :as b]
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.impl :as impl]
-   [simple-stackless-lisp.util :as u :refer [->cps]]))
+   [simple-stackless-lisp.util :as u]))
 
 (defn walk
   [this exp env k GUARD]
   (GUARD walk [this exp env k GUARD])
   (cond
     (or (number? exp)
-        (string? exp))
+        (string? exp)
+        (keyword? exp))
     (k exp)
 
     (contains? #{nil true false} exp)
@@ -55,41 +57,9 @@
     :else
     (u/throw+ "Can't evaluate: " exp)))
 
-(def builtins
-  {'list  (->cps list)
-   'first (->cps first)
-   'rest  (->cps rest)
-   'seq   (->cps seq)
-   'cons  (->cps cons)
-
-   'print   (->cps print)
-   'println (->cps println)
-
-   'gensym (->cps gensym)
-
-   'apply
-   (fn [k f args]
-     (apply f (cons k args)))
-
-   'call-cc
-   (fn [k f]
-     (f k (fn CC [_ ret]
-            (k ret))))
-
-   '= (->cps =)
-   '< (->cps <)
-   '> (->cps >)
-   '<= (->cps <=)
-   '>= (->cps >=)
-
-   '+ (->cps +')
-   '- (->cps -)
-   '* (->cps *')
-   '/ (->cps /)})
-
 (defn eval
   ([exp]
-   (eval exp (env/fresh-env builtins)))
+   (eval exp (env/fresh-env b/builtins)))
   ([exp env]
    (eval exp env identity))
   ([exp env k]
