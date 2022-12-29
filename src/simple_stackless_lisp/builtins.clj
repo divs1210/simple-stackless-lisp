@@ -1,5 +1,5 @@
 (ns simple-stackless-lisp.builtins
-  (:refer-clojure :exclude [apply])
+  (:refer-clojure :exclude [methods])
   (:require
    [clojure.core :as core]
    [simple-stackless-lisp.types :as t]
@@ -78,11 +78,24 @@
 
 (defn multi-info
   [multi]
-  (let [info (t/mutable-hash-map-get multi-registry
-                                     [multi]
-                                     nil)]
-    (update info :implementations
-            #(-> % :mm deref keys vec))))
+  (some-> multi-registry
+          (t/mutable-hash-map-get [multi] nil)
+          (update :implementations t/mutable-hash-map-snapshot)))
+
+(defn multi-display-info
+  [multi]
+  (let [{:keys [name implementations]} (multi-info multi)]
+    {:name name
+     :dispatch-vals (set (keys implementations))}))
+
+(defn methods
+  [multi]
+  (-> multi multi-info :implementations))
+
+(defn implementation?
+  [multi dispatch-val]
+  (let [impls (methods multi)]
+    (contains? impls dispatch-val)))
 
 (def builtins
   {;; Types
@@ -93,7 +106,10 @@
    'method  k-method
    'apply   k-apply
 
-   multi-info (->cps multi-info)
+   'multi-info         (->cps multi-info)
+   'multi-display-info (->cps multi-display-info)
+   'methods            (->cps methods)
+   'implementation?    (->cps implementation?)
 
    'instance?
    (fn [k t obj]

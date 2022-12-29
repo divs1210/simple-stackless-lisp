@@ -175,6 +175,10 @@
   [^Atom mm keys not-found]
   (get-in @(:mm mm) keys not-found))
 
+(defn mutable-hash-map-snapshot
+  [^Atom mm]
+  @(:mm mm))
+
 (defn mutable-hash-map-put!
   [^Atom mm keys val]
   (swap! (:mm mm) assoc-in keys val)
