@@ -28,13 +28,15 @@
         (t/mutable-hash-map)
 
         dispatch
-        (fn [with-result & args]
-          (let [dispatch-val (t/type (first args))
-                default-impl (method-not-found-error name dispatch-val)
-                k-impl (t/mutable-hash-map-get implementations
-                                               [dispatch-val]
-                                               default-impl)]
-            (core/apply k-impl (cons with-result args))))]
+        (with-meta
+          (fn [with-result & args]
+            (let [dispatch-val (t/type (first args))
+                  default-impl (method-not-found-error name dispatch-val)
+                  k-impl (t/mutable-hash-map-get implementations
+                                                 [dispatch-val]
+                                                 default-impl)]
+              (core/apply k-impl (cons with-result args))))
+          {:multimethod? true})]
     (t/mutable-hash-map-put! multi-registry
                              [dispatch]
                              {:name name
@@ -43,9 +45,7 @@
                              ['Fn]
                              (fn [k f args]
                                (core/apply f (cons k args))))
-    (with-meta
-      dispatch
-      {:multimethod? true})))
+    dispatch))
 
 (defn- k-multi
   [k name k-args->dispatch-val opts]
@@ -53,21 +53,21 @@
         implementations (t/mutable-hash-map)
 
         dispatch
-        (fn [with-result & args]
-          (k-apply
-           (fn [dispatch-val]
-             (let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] default-impl)
-                   k-impl (or k-impl (method-not-found-error name dispatch-val))]
-               (k-apply with-result k-impl args)))
-           k-args->dispatch-val
-           args))]
+        (with-meta
+          (fn [with-result & args]
+            (k-apply
+             (fn [dispatch-val]
+               (let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] default-impl)
+                     k-impl (or k-impl (method-not-found-error name dispatch-val))]
+                 (k-apply with-result k-impl args)))
+             k-args->dispatch-val
+             args))
+          {:multimethod? true})]
     (t/mutable-hash-map-put! multi-registry
                              [dispatch]
                              {:name name
                               :implementations implementations})
-    (k (with-meta
-         dispatch
-         {:multimethod? true}))))
+    (k dispatch)))
 
 (defn- k-method
   [k multi dispatch-val k-impl]
@@ -76,13 +76,24 @@
     (t/mutable-hash-map-put! impls [dispatch-val] k-impl)
     (k nil)))
 
+(defn multi-info
+  [multi]
+  (let [info (t/mutable-hash-map-get multi-registry
+                                     [multi]
+                                     nil)]
+    (update info :implementations
+            #(-> % :mm deref keys vec))))
+
 (def builtins
   {;; Types
    ;; =====
    'type   (->cps t/type)
-   'multi  k-multi
-   'method k-method
-   'apply  k-apply
+
+   'multi   k-multi
+   'method  k-method
+   'apply   k-apply
+
+   multi-info (->cps multi-info)
 
    'instance?
    (fn [k t obj]
