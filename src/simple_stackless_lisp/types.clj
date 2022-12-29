@@ -11,26 +11,28 @@
 ;; =====
 (declare array?)
 
-(defn atom? [obj]
-  (instance? Atom obj))
-
 (defn typed-map? [m]
   (and (map? m)
        (contains? m :type)))
 
+(defn multimethod? [obj]
+  (and (fn? obj)
+       (:multimethod? (meta obj))))
+
 (defn type [obj]
   (cond
-    (number?    obj) 'Number
-    (fn?        obj) 'Fn
-    (nil?       obj) 'Nil
-    (boolean?   obj) 'Boolean
-    (string?    obj) 'String
-    (symbol?    obj) 'Symbol
-    (keyword?   obj) 'Keyword
-    (array?     obj) 'Array
-    (vector?    obj) 'Vector
-    (typed-map? obj) (:type obj)
-    (map?       obj) 'HashMap
+    (number?      obj) 'Number
+    (multimethod? obj) 'MultiMethod
+    (fn?          obj) 'Fn
+    (nil?         obj) 'Nil
+    (boolean?     obj) 'Boolean
+    (string?      obj) 'String
+    (symbol?      obj) 'Symbol
+    (keyword?     obj) 'Keyword
+    (array?       obj) 'Array
+    (vector?      obj) 'Vector
+    (typed-map?   obj) (:type obj)
+    (map?         obj) 'HashMap
     :else (u/throw+ "Don't know type of: " obj)))
 
 ;; Arrays

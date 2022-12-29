@@ -1,9 +1,9 @@
 (ns simple-stackless-lisp.builtins
   (:refer-clojure :exclude [apply])
   (:require
+   [clojure.core :as core]
    [simple-stackless-lisp.types :as t]
-   [simple-stackless-lisp.util :refer [->cps]]
-   [clojure.core :as core]))
+   [simple-stackless-lisp.util :refer [->cps]]))
 
 (def ^:private multi-registry
   (t/mutable-hash-map))
@@ -43,7 +43,9 @@
                              ['Fn]
                              (fn [k f args]
                                (core/apply f (cons k args))))
-    dispatch))
+    (with-meta
+      dispatch
+      {:multimethod? true})))
 
 (defn- k-multi
   [k name k-args->dispatch-val opts]
@@ -63,7 +65,9 @@
                              [dispatch]
                              {:name name
                               :implementations implementations})
-    (k dispatch)))
+    (k (with-meta
+         dispatch
+         {:multimethod? true}))))
 
 (defn- k-method
   [k multi dispatch-val k-impl]
