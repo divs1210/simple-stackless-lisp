@@ -1,16 +1,90 @@
 (ns simple-stackless-lisp.builtins
+  (:refer-clojure :exclude [apply])
   (:require
    [simple-stackless-lisp.types :as t]
-   [simple-stackless-lisp.util :refer [->cps]]))
+   [simple-stackless-lisp.util :refer [->cps]]
+   [clojure.core :as core]))
+
+(def ^:private multi-registry
+  (t/mutable-hash-map))
+
+(defn- method-not-found-error
+  [name dispatch-val]
+  (fn [k & _]
+    (let [msg (str "No implementation of method: " name
+                   " found for dispatch-val: " dispatch-val)]
+      (throw (ex-info
+              msg
+              {:type 'MethodNotFoundError
+               :multi name
+               :dispatch-val dispatch-val
+               :msg msg}))
+      (k nil))))
+
+(def k-apply
+  (let [name "apply"
+
+        implementations
+        (t/mutable-hash-map)
+
+        dispatch
+        (fn [with-result & args]
+          (let [dispatch-val (t/type (first args))
+                default-impl (method-not-found-error name dispatch-val)
+                k-impl (t/mutable-hash-map-get implementations
+                                               [dispatch-val]
+                                               default-impl)]
+            (core/apply k-impl (cons with-result args))))]
+    (t/mutable-hash-map-put! multi-registry
+                             [dispatch]
+                             {:name name
+                              :implementations implementations})
+    (t/mutable-hash-map-put! implementations
+                             ['Fn]
+                             (fn [k f args]
+                               (core/apply f (cons k args))))
+    dispatch))
+
+(defn- k-multi
+  [k name k-args->dispatch-val opts]
+  (let [default-impl (:default-impl opts)
+        implementations (t/mutable-hash-map)
+
+        dispatch
+        (fn [with-result & args]
+          (k-apply
+           (fn [dispatch-val]
+             (let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] default-impl)
+                   k-impl (or k-impl (method-not-found-error name dispatch-val))]
+               (k-apply with-result k-impl args)))
+           k-args->dispatch-val
+           args))]
+    (t/mutable-hash-map-put! multi-registry
+                             [dispatch]
+                             {:name name
+                              :implementations implementations})
+    (k dispatch)))
+
+(defn- k-method
+  [k multi dispatch-val k-impl]
+  (let [multi-record (t/mutable-hash-map-get multi-registry [multi] nil)
+        impls (:implementations multi-record)]
+    (t/mutable-hash-map-put! impls [dispatch-val] k-impl)
+    (k nil)))
 
 (def builtins
   {;; Types
    ;; =====
-   'type (->cps t/type)
+   'type   (->cps t/type)
+   'multi  k-multi
+   'method k-method
+   'apply  k-apply
 
    'instance?
    (fn [k t obj]
      (k (= t (t/type obj))))
+
+   'MethodNotFoundError 'MethodNotFoundError
 
    ;; Primitives
    ;; ==========
@@ -76,10 +150,6 @@
    ;; ====
    'identical? (->cps identical?)
    'gensym     (->cps gensym)
-
-   'apply
-   (fn [k f args]
-     (apply f (cons k args)))
 
    'call-cc
    (fn [k f]

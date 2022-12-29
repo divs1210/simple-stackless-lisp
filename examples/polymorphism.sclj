@@ -1,0 +1,8 @@
+(method apply Vector
+ (fn [v args]
+   (let [idx (vector-get args 0)]
+     (vector-get v idx))))
+
+(def v (vector 10 20 30))
+
+(println (v 1))
