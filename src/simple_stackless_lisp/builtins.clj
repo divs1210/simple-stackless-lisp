@@ -45,6 +45,10 @@
                              ['Fn]
                              (fn [k f args]
                                (core/apply f (cons k args))))
+    (t/mutable-hash-map-put! implementations
+                             ['MultiMethod]
+                             (fn [k f args]
+                               (core/apply f (cons k args))))
     dispatch))
 
 (defn- k-multi
