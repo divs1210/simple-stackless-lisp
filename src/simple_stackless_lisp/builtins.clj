@@ -1,5 +1,5 @@
 (ns simple-stackless-lisp.builtins
-  (:refer-clojure :exclude [methods])
+  (:refer-clojure :exclude [methods get-method])
   (:require
    [clojure.core :as core]
    [simple-stackless-lisp.types :as t]
@@ -8,18 +8,22 @@
 (def ^:private multi-registry
   (t/mutable-hash-map))
 
-(defn- method-not-found-error
-  [name dispatch-val]
-  (fn [k & _]
-    (let [msg (str "No implementation of method: " name
-                   " found for dispatch-val: " dispatch-val)]
-      (throw (ex-info
-              msg
-              {:type 'MethodNotFoundError
-               :multi name
-               :dispatch-val dispatch-val
-               :msg msg}))
-      (k nil))))
+(defn- k-default-method
+  [k name dispatch-val & args]
+  (let [msg (str "No implementation of method: " name
+                 " found for dispatch-val: " dispatch-val)]
+    (throw (ex-info
+            msg
+            {:type 'MethodNotFoundError
+             :multi name
+             :dispatch-val dispatch-val
+             :msg msg}))
+    (k nil)))
+
+(defn- make-k-default-method
+  [name]
+  (fn [k dispatch-val & args]
+    (core/apply k-default-method k name dispatch-val args)))
 
 (def k-apply
   (let [name "apply"
@@ -30,36 +34,42 @@
         dispatch
         (with-meta
           (fn [with-result & args]
-            (let [dispatch-val (t/type (first args))
-                  default-impl (method-not-found-error name dispatch-val)
-                  k-impl (t/mutable-hash-map-get implementations
-                                                 [dispatch-val]
-                                                 default-impl)]
-              (core/apply k-impl (cons with-result args))))
+            (let [dispatch-val (t/type (first args))]
+              (if-let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] nil)]
+                (core/apply k-impl (cons with-result args))
+                (let [k-default-impl (t/mutable-hash-map-get implementations [:MultiMethod/default] nil)]
+                  (core/apply k-default-impl with-result dispatch-val args)))))
           {:multimethod? true})]
     (t/mutable-hash-map-put! multi-registry
                              [dispatch]
                              {:name name
                               :implementations implementations})
     (t/mutable-hash-map-put! implementations
+                             [:MultiMethod/default]
+                             (make-k-default-method name))
+    (t/mutable-hash-map-put! implementations
                              ['Fn]
+                             (fn [k f args]
+                               (core/apply f (cons k args))))
+    (t/mutable-hash-map-put! implementations
+                             ['MultiMethod]
                              (fn [k f args]
                                (core/apply f (cons k args))))
     dispatch))
 
 (defn- k-multi
-  [k name k-args->dispatch-val opts]
-  (let [default-impl (:default-impl opts)
-        implementations (t/mutable-hash-map)
+  [k name k-args->dispatch-val]
+  (let [implementations (t/mutable-hash-map)
 
         dispatch
         (with-meta
           (fn [with-result & args]
             (k-apply
              (fn [dispatch-val]
-               (let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] default-impl)
-                     k-impl (or k-impl (method-not-found-error name dispatch-val))]
-                 (k-apply with-result k-impl args)))
+               (if-let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] nil)]
+                 (k-apply with-result k-impl args)
+                 (let [k-default-impl (t/mutable-hash-map-get implementations [:MultiMethod/default] nil)]
+                   (k-apply with-result k-default-impl (cons dispatch-val args)))))
              k-args->dispatch-val
              args))
           {:multimethod? true})]
@@ -67,6 +77,9 @@
                              [dispatch]
                              {:name name
                               :implementations implementations})
+    (t/mutable-hash-map-put! implementations
+                             [:MultiMethod/default]
+                             (make-k-default-method name))
     (k dispatch)))
 
 (defn- k-method
@@ -76,26 +89,26 @@
     (t/mutable-hash-map-put! impls [dispatch-val] k-impl)
     (k nil)))
 
-(defn multi-info
+(defn- multi-info
   [multi]
   (some-> multi-registry
           (t/mutable-hash-map-get [multi] nil)
           (update :implementations t/mutable-hash-map-snapshot)))
 
-(defn multi-display-info
+(defn- multi-display-info
   [multi]
   (let [{:keys [name implementations]} (multi-info multi)]
     {:name name
-     :dispatch-vals (set (keys implementations))}))
+     :dispatch-vals (vec (keys implementations))}))
 
 (defn methods
   [multi]
   (-> multi multi-info :implementations))
 
-(defn implementation?
+(defn get-method
   [multi dispatch-val]
   (let [impls (methods multi)]
-    (contains? impls dispatch-val)))
+    (get impls dispatch-val (:MultiMethod/default impls))))
 
 (def builtins
   {;; Types
@@ -103,14 +116,13 @@
    'type      (->cps t/type)
    'instance? (->cps t/instance?)
 
-   'multi   k-multi
-   'method  k-method
-   'apply   k-apply
-
-   'multi-info         (->cps multi-info)
-   'multi-display-info (->cps multi-display-info)
-   'methods            (->cps methods)
-   'implementation?    (->cps implementation?)
+   ;; Bootstrapped Functions
+   ;; ======================
+   'apply      k-apply
+   'multi      k-multi
+   'method     k-method
+   'methods    (->cps methods)
+   'get-method (->cps get-method)
 
    ;; Primitives
    ;; ==========
@@ -121,8 +133,8 @@
    'Symbol      'Symbol
    'Keyword     'Keyword
    'Fn          'Fn
-   'MultiMethod 'MultiMethod
 
+   'MultiMethod         'MultiMethod
    'MethodNotFoundError 'MethodNotFoundError
 
    ;; Arrays
