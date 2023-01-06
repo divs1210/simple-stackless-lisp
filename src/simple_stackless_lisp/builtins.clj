@@ -143,6 +143,17 @@
          items (str/join ", " item-strs)]
      (k (str "[" items "]")))))
 
+(k-method
+ identity k-to-string 'HashMap
+ (fn [k m]
+   (let [item-strs (map (fn [[k v]]
+                          (str (k-to-string identity k)
+                               " "
+                               (k-to-string identity v)))
+                        m)
+         items (str/join ", " item-strs)]
+     (k (str "{" items "}")))))
+
 ;; Core library
 ;; ============
 (def builtins
