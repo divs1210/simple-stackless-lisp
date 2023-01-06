@@ -3,10 +3,11 @@
   (:require
    [clojure.core :as core]
    [simple-stackless-lisp.types :as t]
-   [simple-stackless-lisp.util :refer [->cps]]))
+   [simple-stackless-lisp.util :refer [->cps]]
+   [clojure.string :as str]))
 
 (def ^:private multi-registry
-  (t/mutable-hash-map))
+  (atom {}))
 
 (defn- k-default-method
   [k name dispatch-val & args]
@@ -29,71 +30,66 @@
   (let [name "apply"
 
         implementations
-        (t/mutable-hash-map)
+        (atom {})
 
         dispatch
         (with-meta
           (fn [with-result & args]
             (let [dispatch-val (t/type (first args))]
-              (if-let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] nil)]
+              (if-let [k-impl (get @implementations dispatch-val)]
                 (core/apply k-impl (cons with-result args))
-                (let [k-default-impl (t/mutable-hash-map-get implementations [:MultiMethod/default] nil)]
+                (let [k-default-impl (get @implementations :MultiMethod/default)]
                   (core/apply k-default-impl with-result dispatch-val args)))))
           {:multimethod? true})]
-    (t/mutable-hash-map-put! multi-registry
-                             [dispatch]
-                             {:name name
-                              :implementations implementations})
-    (t/mutable-hash-map-put! implementations
-                             [:MultiMethod/default]
-                             (make-k-default-method name))
-    (t/mutable-hash-map-put! implementations
-                             ['Fn]
-                             (fn [k f args]
-                               (core/apply f (cons k args))))
-    (t/mutable-hash-map-put! implementations
-                             ['MultiMethod]
-                             (fn [k f args]
-                               (core/apply f (cons k args))))
+    (swap! multi-registry assoc
+           dispatch {:name name
+                     :implementations implementations})
+    (swap! implementations assoc
+           :MultiMethod/default (make-k-default-method name))
+    (swap! implementations assoc
+           'Fn (fn [k f args]
+                 (core/apply f (cons k args))))
+    (swap! implementations assoc
+           'MultiMethod (fn [k f args]
+                          (core/apply f (cons k args))))
     dispatch))
 
 (defn- k-multi
   [k name k-args->dispatch-val]
-  (let [implementations (t/mutable-hash-map)
+  (let [implementations
+        (atom {})
 
         dispatch
         (with-meta
           (fn [with-result & args]
             (k-apply
              (fn [dispatch-val]
-               (if-let [k-impl (t/mutable-hash-map-get implementations [dispatch-val] nil)]
+               (if-let [k-impl (get @implementations dispatch-val)]
                  (k-apply with-result k-impl args)
-                 (let [k-default-impl (t/mutable-hash-map-get implementations [:MultiMethod/default] nil)]
+                 (let [k-default-impl (get @implementations :MultiMethod/default)]
                    (k-apply with-result k-default-impl (cons dispatch-val args)))))
              k-args->dispatch-val
              args))
           {:multimethod? true})]
-    (t/mutable-hash-map-put! multi-registry
-                             [dispatch]
-                             {:name name
-                              :implementations implementations})
-    (t/mutable-hash-map-put! implementations
-                             [:MultiMethod/default]
-                             (make-k-default-method name))
+    (swap! multi-registry assoc
+           dispatch {:name name
+                     :implementations implementations})
+    (swap! implementations assoc
+           :MultiMethod/default (make-k-default-method name))
     (k dispatch)))
 
 (defn- k-method
   [k multi dispatch-val k-impl]
-  (let [multi-record (t/mutable-hash-map-get multi-registry [multi] nil)
+  (let [multi-record (get @multi-registry multi)
         impls (:implementations multi-record)]
-    (t/mutable-hash-map-put! impls [dispatch-val] k-impl)
+    (swap! impls assoc dispatch-val k-impl)
     (k nil)))
 
 (defn- multi-info
   [multi]
-  (some-> multi-registry
-          (t/mutable-hash-map-get [multi] nil)
-          (update :implementations t/mutable-hash-map-snapshot)))
+  (some-> @multi-registry
+          (get multi)
+          (update :implementations deref)))
 
 (defn- multi-display-info
   [multi]
@@ -110,6 +106,56 @@
   (let [impls (methods multi)]
     (get impls dispatch-val (:MultiMethod/default impls))))
 
+;; Primitive multimethods
+;; ======================
+(def k-to-string
+  (k-multi identity "->str"
+   (fn [k obj]
+     (k (t/type obj)))))
+
+;; Number, Boolean, String, Symbol, Keyword
+(k-method
+ identity k-to-string :MultiMethod/default
+ (fn [k _ obj]
+   (k (pr-str obj))))
+
+(k-method
+ identity k-to-string 'Nil
+ (fn [k n]
+   (k "nil")))
+
+(k-method
+ identity k-to-string 'Fn
+ (fn [k f]
+   (k (str "#Fn"))))
+
+(k-method
+ identity k-to-string 'MultiMethod
+ (fn [k m]
+   (let [info (multi-display-info m)
+         info-str (k-to-string identity info)]
+     (k (str "#MultiMethod" info-str)))))
+
+(k-method
+ identity k-to-string 'Vector
+ (fn [k v]
+   (let [item-strs (map #(k-to-string identity %) v)
+         items (str/join ", " item-strs)]
+     (k (str "[" items "]")))))
+
+(k-method
+ identity k-to-string 'HashMap
+ (fn [k m]
+   (let [item-strs (map (fn [[k v]]
+                          (str (k-to-string identity k)
+                               " "
+                               (k-to-string identity v)))
+                        m)
+         items (str/join ", " item-strs)]
+     (k (str "{" items "}")))))
+
+;; Core library
+;; ============
 (def builtins
   {;; Types
    ;; =====
@@ -137,50 +183,25 @@
    'MultiMethod         'MultiMethod
    'MethodNotFoundError 'MethodNotFoundError
 
-   ;; Arrays
-   ;; ======
-   'Array         'Array
-   'array         (->cps t/array)
-   'array-size    (->cps t/array-size)
-   'array-get     (->cps t/array-get)
-   'array-slice   (->cps t/array-slice)
-   'array-put!    (->cps t/array-put!)
-   'array-insert! (->cps t/array-insert!)
-
-   ;; Array Windows
-   ;; =============
-   'ArrayWindow        'ArrayWindow
-   'array-window       (->cps t/array-window)
-   'array-window-size  (->cps t/array-size)
-   'array-window-get   (->cps t/array-window-get)
-   'array-window-slice (->cps t/array-window-slice)
-   'array-window-put!  (->cps t/array-window-put!)
-
    ;; Vectors
    ;; =======
    'Vector        'Vector
    'vector        (->cps vector)
    'vector-size   (->cps t/vector-size)
    'vector-get    (->cps t/vector-get)
-   'vector-slice  (->cps t/vector-slice)
    'vector-put    (->cps t/vector-put)
-   'vector-insert (->cps t/vector-insert)
+   'vector-slice  (->cps t/vector-slice)
+   'vector-concat (->cps t/vector-concat)
 
-   ;; Mutable Hashmaps
-   ;; ================
-   'MutableHashMap          'MutableHashMap
-   'mutable-hash-map        (->cps t/mutable-hash-map)
-   'mutable-hash-map-size   (->cps t/mutable-hash-map-size)
-   'mutable-hash-map-get    (->cps t/mutable-hash-map-get)
-   'mutable-hash-map-put!   (->cps t/mutable-hash-map-put!)
-
-   ;; Immutable Hashmaps
-   ;; ==================
-   'HashMap       'HashMap
-   'hash-map      (->cps hash-map)
-   'hash-map-size (->cps t/hash-map-size)
-   'hash-map-get  (->cps t/hash-map-get)
-   'hash-map-put! (->cps t/hash-map-put)
+   ;; Hashmaps
+   ;; ========
+   'HashMap         'HashMap
+   'hash-map        (->cps hash-map)
+   'hash-map-size   (->cps t/hash-map-size)
+   'hash-map-get    (->cps t/hash-map-get)
+   'hash-map-put    (->cps t/hash-map-put)
+   'hash-map-select (->cps t/hash-map-select)
+   'hash-map-merge  (->cps t/hash-map-merge)
 
    ;; I/O
    ;; ===
@@ -215,4 +236,8 @@
    '+ (->cps +')
    '- (->cps -)
    '* (->cps *')
-   '/ (->cps /)})
+   '/ (->cps /)
+
+   ;; Strings
+   ;; =======
+   '->str k-to-string})

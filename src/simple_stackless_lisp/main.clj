@@ -20,7 +20,7 @@
   (let [env (env/fresh-env b/builtins)
         k   (fn [ret]
               (env/bind! env '%1 ret)
-              (println "=>" (pr-str ret) "\n"))
+              (println "=>" (b/k-to-string identity ret) "\n"))
         exe (u/executor)]
     (while true
       (try
@@ -29,7 +29,8 @@
         (core/eval (u/read-exp) env k exe)
         (catch Exception e
           (env/bind! env '*e e)
-          (println "Error: " (.getMessage e)))))))
+          (println "Error: " (.getMessage e))
+          (println))))))
 
 (defn -main
   [& [filename]]
