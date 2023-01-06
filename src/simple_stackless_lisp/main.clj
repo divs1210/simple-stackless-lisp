@@ -29,7 +29,8 @@
         (core/eval (u/read-exp) env k exe)
         (catch Exception e
           (env/bind! env '*e e)
-          (println "Error: " (.getMessage e)))))))
+          (println "Error: " (.getMessage e))
+          (println))))))
 
 (defn -main
   [& [filename]]
