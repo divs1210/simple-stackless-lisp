@@ -24,6 +24,9 @@
     (vector? exp)
     (impl/k-read-vector this exp env k GUARD)
 
+    (map? exp)
+    (impl/k-read-map this exp env k GUARD)
+
     (seq? exp)
     (let [[op & args] exp]
       (case op

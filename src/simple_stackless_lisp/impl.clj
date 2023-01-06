@@ -151,3 +151,15 @@
              vlit
              with-xs
              GUARD)))
+
+(defn k-read-map
+  [walk mlit env k GUARD]
+  (letfn [(with-entries [entries]
+            (GUARD with-entries [entries])
+            (k (into {} entries)))]
+    (u/k-map (fn CC [kv with-kv GUARD]
+               (GUARD CC [kv with-kv GUARD])
+               (k-read-vector walk kv env with-kv GUARD))
+             mlit
+             with-entries
+             GUARD)))
