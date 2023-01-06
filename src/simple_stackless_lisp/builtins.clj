@@ -3,7 +3,8 @@
   (:require
    [clojure.core :as core]
    [simple-stackless-lisp.types :as t]
-   [simple-stackless-lisp.util :refer [->cps]]))
+   [simple-stackless-lisp.util :refer [->cps]]
+   [clojure.string :as str]))
 
 (def ^:private multi-registry
   (atom {}))
@@ -134,6 +135,13 @@
    (let [info (multi-display-info m)
          info-str (k-to-string identity info)]
      (k (str "#MultiMethod" info-str)))))
+
+(k-method
+ identity k-to-string 'Vector
+ (fn [k v]
+   (let [item-strs (map #(k-to-string identity %) v)
+         items (str/join ", " item-strs)]
+     (k (str "[" items "]")))))
 
 ;; Core library
 ;; ============
