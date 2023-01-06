@@ -117,6 +117,7 @@
    (fn [k obj]
      (k (t/type obj)))))
 
+;; Number, Boolean, String, Symbol, Keyword
 (k-method identity k-to-string :MultiMethod/default
   (fn [k _ obj]
     (k (str obj))))
