@@ -136,3 +136,18 @@
                              k-apply-fn)]
               (apply-fn walk [f arg-exps] env k GUARD)))]
     (walk walk f-exp env with-f GUARD)))
+
+
+;; Reader
+;; ======
+(defn k-read-vector
+  [walk vlit env k GUARD]
+  (letfn [(with-xs [xs]
+            (GUARD with-xs [xs])
+            (k (vec xs)))]
+    (u/k-map (fn CC [x-exp with-x GUARD]
+               (GUARD CC [x-exp with-x GUARD])
+               (walk walk x-exp env with-x GUARD))
+             vlit
+             with-xs
+             GUARD)))
