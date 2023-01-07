@@ -1,9 +1,13 @@
 (ns simple-stackless-lisp.types
-  (:refer-clojure :exclude [type instance?])
+  (:refer-clojure :exclude [char type instance?])
   (:require
-   [simple-stackless-lisp.util :as u])
+   [simple-stackless-lisp.util :as u]
+   [clojure.string :as str]
+   [clojure.core :as core])
   (:import
    (clojure.lang IPersistentMap PersistentVector)))
+
+(set! *warn-on-reflection* true)
 
 ;; Types
 ;; =====
@@ -141,3 +145,122 @@
 (defn hash-map-merge
   [^IPersistentMap this ^IPersistentMap that]
   (merge this that))
+
+
+;; Unicode Code Points
+;; ===================
+(defn code-point-valid?
+  [^Integer i]
+  (Character/isValidCodePoint i))
+
+(defn- code-point-non-breaking-whitespace?
+  [^Integer cp]
+  (contains? #{\u00A0 \u2007 \u2060 \u202F}
+             (core/char cp)))
+
+(defn- code-point-breaking-whitespace?
+  [^Integer cp]
+  (Character/isWhitespace cp))
+
+(defn- code-point-whitespace?
+  [^Integer cp]
+  (or (code-point-non-breaking-whitespace? cp)
+      (code-point-breaking-whitespace? cp)))
+
+(defn- code-point-upcase
+  [^Integer cp]
+  (Character/toUpperCase cp))
+
+(defn- code-point-downcase
+  [^Integer cp]
+  (Character/toLowerCase cp))
+
+(defn- code-point->java-string
+  [^Integer cp]
+  (Character/toString cp))
+
+
+;; Unicode Characters
+;; ==================
+(defn char
+  ([cp]
+   (char cp true))
+  ([^Integer cp check?]
+   (when check?
+     (assert (code-point-valid? cp)
+             (str "Not a Unicode code point: " cp)))
+   {:type 'Character
+    :code-point cp}))
+
+(defn char-non-breaking-whitespace?
+  [{:keys [^Integer code-point]}]
+  (code-point-non-breaking-whitespace? code-point))
+
+(defn char-breaking-whitespace?
+  [{:keys [^Integer code-point]}]
+  (code-point-breaking-whitespace? code-point))
+
+(defn char-whitespace?
+  [{:keys [^Integer code-point]}]
+  (code-point-whitespace? code-point))
+
+(defn char-upcase
+  [{:keys [^Integer code-point]}]
+  (char (code-point-upcase code-point)))
+
+(defn char-downcase
+  [{:keys [^Integer code-point]}]
+  (char (code-point-downcase code-point)))
+
+(defn char->java-string
+  [{:keys [^Integer code-point]}]
+  (code-point->java-string code-point))
+
+
+;; Immutable Unicode Strings
+;; =========================
+(defn string
+  [^PersistentVector chars]
+  {:type 'String
+   :chars chars})
+
+(defn string-size
+  [{:keys [chars]}]
+  (vector-size chars))
+
+(defn string-get
+  [{:keys [chars]} idx]
+  (chars idx))
+
+(defn string-put
+  [{:keys [chars]} idx char]
+  (string (vector-put chars idx char)))
+
+(defn string-slice
+  [{:keys [chars]} from to]
+  (string (vector-slice chars from to)))
+
+(defn string-concat
+  [this that]
+  (let [this-chars (:chars this)
+        that-chars (:chars that)]
+    (string (vector-concat this-chars that-chars))))
+
+(defn string-blank?
+  [{:keys [chars]}]
+  (every? char-whitespace? chars))
+
+(defn java-string->string
+  [^String s]
+  (->> s
+       (.codePoints)
+       (.boxed)
+       (.toList)
+       (mapv #(char % false))
+       (string)))
+
+(defn string->java-string
+  [{:keys [chars]}]
+  (->> chars
+       (map char->java-string)
+       (str/join)))
