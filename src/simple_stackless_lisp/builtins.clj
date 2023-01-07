@@ -172,6 +172,60 @@
                         items-str
                         (t/java-string->string "}")])))))
 
+(def k-to-readable-string
+  (k-multi identity "->rstr"
+   (fn [k obj]
+     (k (t/type obj)))))
+
+(k-method
+ identity k-to-readable-string :MultiMethod/default
+ (fn [k _ obj]
+   (k-to-string k obj)))
+
+(k-method
+ identity k-to-readable-string 'Character
+ (fn [k c]
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "#char \"")
+                      (t/string [c])
+                      (t/java-string->string "\"")]))))
+
+(k-method
+ identity k-to-readable-string 'String
+ (fn [k s]
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "\"")
+                      s
+                      (t/java-string->string "\"")]))))
+
+(k-method
+ identity k-to-readable-string 'Vector
+ (fn [k v]
+   (let [item-strs (map #(k-to-readable-string identity %) v)
+         items-str (t/string-join (t/java-string->string ", ")
+                                  item-strs)]
+     (k (t/string-join (t/string [])
+                       [(t/java-string->string "[")
+                        items-str
+                        (t/java-string->string "]")])))))
+
+(k-method
+ identity k-to-readable-string 'HashMap
+ (fn [k m]
+   (let [item-strs (map (fn [[k v]]
+                          (t/string-join (t/java-string->string " ")
+                                         [(k-to-readable-string identity k)
+                                          (k-to-readable-string identity v)]))
+                        m)
+         items-str (t/string-join (t/java-string->string ", ")
+                                  item-strs)]
+     (k (t/string-join (t/string [])
+                       [(t/java-string->string "{")
+                        items-str
+                        (t/java-string->string "}")])))))
+
+
+
 ;; Core library
 ;; ============
 (def builtins
@@ -203,9 +257,17 @@
 
    ;; Strings
    ;; =======
-   'String     'String
-   'string     (->cps t/string)
-   'string-get (->cps t/string-get)
+   'String        'String
+   'string        (->cps t/string)
+   'string-size   (->cps t/string-size)
+   'string-get    (->cps t/string-get)
+   'string-put    (->cps t/string-put)
+   'string-slice  (->cps t/string-slice)
+   'string-concat (->cps t/string-concat)
+   'string-join   (->cps t/string-join)
+   'string-blank? (->cps t/string-blank?)
+   '->str         k-to-string
+   '->rstr        k-to-readable-string
 
    ;; Vectors
    ;; =======
@@ -260,8 +322,4 @@
    '+ (->cps +')
    '- (->cps -)
    '* (->cps *')
-   '/ (->cps /)
-
-   ;; Strings
-   ;; =======
-   '->str k-to-string})
+   '/ (->cps /)})

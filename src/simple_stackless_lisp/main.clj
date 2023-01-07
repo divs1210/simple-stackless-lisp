@@ -22,7 +22,7 @@
         k   (fn [ret]
               (env/bind! env '%1 ret)
               (println "=>"
-                       (t/string->java-string (b/k-to-string identity ret))
+                       (t/string->java-string (b/k-to-readable-string identity ret))
                        "\n"))
         exe (u/executor)]
     (while true
