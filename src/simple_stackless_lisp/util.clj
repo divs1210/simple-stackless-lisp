@@ -105,14 +105,3 @@
             xs
             k
             GUARD))
-
-(defn read-exp
-  "Reads a multi-line edn expression from stdin."
-  []
-  (with-retry [text (read-line)]
-    (edn/read-string text)
-    (catch RuntimeException e
-      (if (= "EOF while reading"
-             (.getMessage e))
-        (retry (str text (read-line)))
-        (throw e)))))
