@@ -4,6 +4,7 @@
    [simple-stackless-lisp.builtins :as b]
    [simple-stackless-lisp.core :as core]
    [simple-stackless-lisp.env :as env]
+   [simple-stackless-lisp.multi :as m]
    [simple-stackless-lisp.reader :as r]
    [simple-stackless-lisp.types :as t]
    [simple-stackless-lisp.util :as u]))
@@ -22,7 +23,7 @@
         k   (fn [ret]
               (env/bind! env '%1 ret)
               (println "=>"
-                       (t/string->java-string (b/k-to-readable-string identity ret))
+                       (t/string->java-string (m/k-to-readable-string identity ret))
                        "\n"))
         exe (u/executor)]
     (while true

@@ -3,9 +3,8 @@
    [clojure.string :as str]
    [clojure.walk :refer [postwalk]]
    [simple-stackless-lisp.env :as env]
-   [simple-stackless-lisp.util :as u]
-   [simple-stackless-lisp.builtins :as b]
-   [simple-stackless-lisp.types :as t]))
+   [simple-stackless-lisp.multi :as m]
+   [simple-stackless-lisp.util :as u]))
 
 (defn k-def
   [walk args env k GUARD]
@@ -113,7 +112,7 @@
   [walk [f arg-exps] env k GUARD]
   (letfn [(with-args [args]
             (GUARD with-args [args])
-            (b/k-apply k f args))]
+            (m/k-apply k f args))]
     (u/k-map (fn CC [x-exp with-x GUARD]
                (GUARD CC [x-exp with-x GUARD])
                (walk walk x-exp env with-x GUARD))
