@@ -4,19 +4,22 @@
    [simple-stackless-lisp.builtins :as b]
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.impl :as impl]
-   [simple-stackless-lisp.util :as u]))
+   [simple-stackless-lisp.util :as u]
+   [simple-stackless-lisp.types :as t]))
 
 (defn walk
   [this exp env k GUARD]
   (GUARD walk [this exp env k GUARD])
   (cond
     (or (number? exp)
-        (string? exp)
         (keyword? exp))
     (k exp)
 
     (contains? #{nil true false} exp)
     (k exp)
+
+    (string? exp)
+    (k (t/java-string->string exp))
 
     (symbol? exp)
     (k (env/lookup env exp))

@@ -1,16 +1,17 @@
 (ns simple-stackless-lisp.main
   (:gen-class)
   (:require
-   [clojure.edn :as edn]
    [simple-stackless-lisp.builtins :as b]
    [simple-stackless-lisp.core :as core]
    [simple-stackless-lisp.env :as env]
+   [simple-stackless-lisp.reader :as r]
+   [simple-stackless-lisp.types :as t]
    [simple-stackless-lisp.util :as u]))
 
 (defn run-file
   [filename]
   (let [text (str "(do " (slurp filename) ")")
-        code (edn/read-string text)]
+        code (r/read-string text)]
     (core/eval code)))
 
 (defn run-repl []
@@ -20,13 +21,15 @@
   (let [env (env/fresh-env b/builtins)
         k   (fn [ret]
               (env/bind! env '%1 ret)
-              (println "=>" (b/k-to-string identity ret) "\n"))
+              (println "=>"
+                       (t/string->java-string (b/k-to-readable-string identity ret))
+                       "\n"))
         exe (u/executor)]
     (while true
       (try
         (print "> ")
         (flush)
-        (core/eval (u/read-exp) env k exe)
+        (core/eval (r/read-exp) env k exe)
         (catch Exception e
           (env/bind! env '*e e)
           (println "Error: " (.getMessage e))

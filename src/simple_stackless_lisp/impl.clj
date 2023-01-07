@@ -4,7 +4,8 @@
    [clojure.walk :refer [postwalk]]
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.util :as u]
-   [simple-stackless-lisp.builtins :as b]))
+   [simple-stackless-lisp.builtins :as b]
+   [simple-stackless-lisp.types :as t]))
 
 (defn k-def
   [walk args env k GUARD]

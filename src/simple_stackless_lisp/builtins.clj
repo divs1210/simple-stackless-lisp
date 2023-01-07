@@ -3,8 +3,7 @@
   (:require
    [clojure.core :as core]
    [simple-stackless-lisp.types :as t]
-   [simple-stackless-lisp.util :refer [->cps]]
-   [clojure.string :as str]))
+   [simple-stackless-lisp.util :refer [->cps]]))
 
 (def ^:private multi-registry
   (atom {}))
@@ -113,46 +112,119 @@
    (fn [k obj]
      (k (t/type obj)))))
 
-;; Number, Boolean, String, Symbol, Keyword
+;; Number, Boolean, Symbol, Keyword
 (k-method
  identity k-to-string :MultiMethod/default
  (fn [k _ obj]
-   (k (pr-str obj))))
+   (k (t/java-string->string (str obj)))))
 
 (k-method
  identity k-to-string 'Nil
  (fn [k n]
-   (k "nil")))
+   (k (t/java-string->string "nil"))))
+
+(k-method
+ identity k-to-string 'Character
+ (fn [k c]
+   (k (t/string [c]))))
+
+(k-method
+ identity k-to-string 'String
+ (fn [k s]
+   (k s)))
 
 (k-method
  identity k-to-string 'Fn
  (fn [k f]
-   (k (str "#Fn"))))
+   (k (t/java-string->string "#Fn"))))
 
 (k-method
  identity k-to-string 'MultiMethod
  (fn [k m]
    (let [info (multi-display-info m)
          info-str (k-to-string identity info)]
-     (k (str "#MultiMethod" info-str)))))
+     (k (t/string-concat (t/java-string->string "#MultiMethod")
+                         info-str)))))
 
 (k-method
  identity k-to-string 'Vector
  (fn [k v]
    (let [item-strs (map #(k-to-string identity %) v)
-         items (str/join ", " item-strs)]
-     (k (str "[" items "]")))))
+         items-str (t/string-join (t/java-string->string ", ")
+                                  item-strs)]
+     (k (t/string-join (t/string [])
+                       [(t/java-string->string "[")
+                        items-str
+                        (t/java-string->string "]")])))))
 
 (k-method
  identity k-to-string 'HashMap
  (fn [k m]
    (let [item-strs (map (fn [[k v]]
-                          (str (k-to-string identity k)
-                               " "
-                               (k-to-string identity v)))
+                          (t/string-join (t/java-string->string " ")
+                                         [(k-to-string identity k)
+                                          (k-to-string identity v)]))
                         m)
-         items (str/join ", " item-strs)]
-     (k (str "{" items "}")))))
+         items-str (t/string-join (t/java-string->string ", ")
+                                  item-strs)]
+     (k (t/string-join (t/string [])
+                       [(t/java-string->string "{")
+                        items-str
+                        (t/java-string->string "}")])))))
+
+(def k-to-readable-string
+  (k-multi identity "->rstr"
+   (fn [k obj]
+     (k (t/type obj)))))
+
+(k-method
+ identity k-to-readable-string :MultiMethod/default
+ (fn [k _ obj]
+   (k-to-string k obj)))
+
+(k-method
+ identity k-to-readable-string 'Character
+ (fn [k c]
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "#char \"")
+                      (t/string [c])
+                      (t/java-string->string "\"")]))))
+
+(k-method
+ identity k-to-readable-string 'String
+ (fn [k s]
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "\"")
+                      s
+                      (t/java-string->string "\"")]))))
+
+(k-method
+ identity k-to-readable-string 'Vector
+ (fn [k v]
+   (let [item-strs (map #(k-to-readable-string identity %) v)
+         items-str (t/string-join (t/java-string->string ", ")
+                                  item-strs)]
+     (k (t/string-join (t/string [])
+                       [(t/java-string->string "[")
+                        items-str
+                        (t/java-string->string "]")])))))
+
+(k-method
+ identity k-to-readable-string 'HashMap
+ (fn [k m]
+   (let [item-strs (map (fn [[k v]]
+                          (t/string-join (t/java-string->string " ")
+                                         [(k-to-readable-string identity k)
+                                          (k-to-readable-string identity v)]))
+                        m)
+         items-str (t/string-join (t/java-string->string ", ")
+                                  item-strs)]
+     (k (t/string-join (t/string [])
+                       [(t/java-string->string "{")
+                        items-str
+                        (t/java-string->string "}")])))))
+
+
 
 ;; Core library
 ;; ============
@@ -175,13 +247,36 @@
    'Nil         'Nil
    'Boolean     'Boolean
    'Number      'Number
-   'String      'String
    'Symbol      'Symbol
    'Keyword     'Keyword
    'Fn          'Fn
 
    'MultiMethod         'MultiMethod
    'MethodNotFoundError 'MethodNotFoundError
+
+   ;; Characters
+   ;; ==========
+   'Character     'Character
+   'char          (->cps t/char)
+   'char-nbsp?    (->cps t/char-non-breaking-whitespace?)
+   'char-bsp?     (->cps t/char-breaking-whitespace?)
+   'char-space?   (->cps t/char-whitespace?)
+   'char-upcase   (->cps t/char-upcase)
+   'char-downcase (->cps t/char-downcase)
+
+   ;; Strings
+   ;; =======
+   'String        'String
+   'string        (->cps t/string)
+   'string-size   (->cps t/string-size)
+   'string-get    (->cps t/string-get)
+   'string-put    (->cps t/string-put)
+   'string-slice  (->cps t/string-slice)
+   'string-concat (->cps t/string-concat)
+   'string-join   (->cps t/string-join)
+   'string-blank? (->cps t/string-blank?)
+   '->str         k-to-string
+   '->rstr        k-to-readable-string
 
    ;; Vectors
    ;; =======
@@ -236,8 +331,4 @@
    '+ (->cps +')
    '- (->cps -)
    '* (->cps *')
-   '/ (->cps /)
-
-   ;; Strings
-   ;; =======
-   '->str k-to-string})
+   '/ (->cps /)})
