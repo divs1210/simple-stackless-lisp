@@ -21,15 +21,14 @@
 
 (defn type [obj]
   (cond
-    (number?      obj) 'Number
-    (multimethod? obj) 'MultiMethod
-    (fn?          obj) 'Fn
     (nil?         obj) 'Nil
     (boolean?     obj) 'Boolean
-    (string?      obj) 'String
+    (number?      obj) 'Number
     (symbol?      obj) 'Symbol
     (keyword?     obj) 'Keyword
     (vector?      obj) 'Vector
+    (multimethod? obj) 'MultiMethod
+    (fn?          obj) 'Fn
     (typed-map?   obj) (:type obj)
     (map?         obj) 'HashMap
     :else (u/throw+ "Don't know type of: " obj)))
@@ -249,6 +248,19 @@
 (defn string-blank?
   [{:keys [chars]}]
   (every? char-whitespace? chars))
+
+(defn string-join
+  [separator strings]
+  (loop [acc (string [])
+         remaining strings]
+    (if-let [[s & more] (seq remaining)]
+      (if (seq more)
+        (recur (-> acc
+                   (string-concat s)
+                   (string-concat separator))
+               more)
+        (string-concat acc s))
+      acc)))
 
 (defn java-string->string
   [^String s]
