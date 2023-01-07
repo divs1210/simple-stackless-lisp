@@ -26,7 +26,7 @@
     (core/apply k-default-method k name dispatch-val args)))
 
 (def k-apply
-  (let [name "apply"
+  (let [name (t/java-string->string "apply")
 
         implementations
         (atom {})
@@ -108,7 +108,7 @@
 ;; Primitive multimethods
 ;; ======================
 (def k-to-string
-  (k-multi identity "->str"
+  (k-multi identity (t/java-string->string "->str")
    (fn [k obj]
      (k (t/type obj)))))
 
@@ -173,7 +173,7 @@
                         (t/java-string->string "}")])))))
 
 (def k-to-readable-string
-  (k-multi identity "->rstr"
+  (k-multi identity (t/java-string->string "->rstr")
    (fn [k obj]
      (k (t/type obj)))))
 
