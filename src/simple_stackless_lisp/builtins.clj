@@ -247,13 +247,22 @@
    'Nil         'Nil
    'Boolean     'Boolean
    'Number      'Number
-   'Character   'Character
    'Symbol      'Symbol
    'Keyword     'Keyword
    'Fn          'Fn
 
    'MultiMethod         'MultiMethod
    'MethodNotFoundError 'MethodNotFoundError
+
+   ;; Characters
+   ;; ==========
+   'Character     'Character
+   'char          (->cps t/char)
+   'char-nbsp?    (->cps t/char-non-breaking-whitespace?)
+   'char-bsp?     (->cps t/char-breaking-whitespace?)
+   'char-space?   (->cps t/char-whitespace?)
+   'char-upcase   (->cps t/char-upcase)
+   'char-downcase (->cps t/char-downcase)
 
    ;; Strings
    ;; =======
