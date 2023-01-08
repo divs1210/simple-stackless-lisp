@@ -32,7 +32,6 @@
         (flush)
         (core/eval (r/read-exp) env k exe)
         (catch Exception e
-          (env/bind! env '*e e)
           (println "Error: " (.getMessage e))
           (println))))))
 
