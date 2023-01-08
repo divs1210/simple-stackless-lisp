@@ -6,10 +6,15 @@
 (def ^:private multi-registry
   (atom {}))
 
+(declare k-to-readable-string)
+
 (defn- k-default-method
   [k name dispatch-val & args]
-  (let [msg (str "No implementation of method: " name
-                 " found for dispatch-val: " dispatch-val)]
+  (let [msg (str "No implementation of method: "
+                 (t/string->java-string name)
+                 " found for dispatch-val: "
+                 (t/string->java-string
+                  (k-to-readable-string identity dispatch-val)))]
     (throw (ex-info
             msg
             {:type 'MethodNotFoundError
