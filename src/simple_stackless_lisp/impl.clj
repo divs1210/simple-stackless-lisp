@@ -4,7 +4,8 @@
    [clojure.walk :refer [postwalk]]
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.multi :as m]
-   [simple-stackless-lisp.util :as u]))
+   [simple-stackless-lisp.util :as u]
+   [simple-stackless-lisp.types :as t]))
 
 (defn k-def
   [walk args env k GUARD]
@@ -96,7 +97,9 @@
                         (swap! stack-depth dec)
                         (print (str/join (repeat @stack-depth "│")))
                         (print "└>")
-                        (prn ret)
+                        (println
+                         (t/string->java-string
+                          (m/k-to-readable-string identity ret)))
                         (t-k ret))
                       GUARD)))]
       (tracing-walk tracing-walk code-exp env k GUARD))))
