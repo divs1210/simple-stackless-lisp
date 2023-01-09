@@ -1,19 +1,22 @@
 (ns simple-stackless-lisp.types
   (:refer-clojure :exclude [char type instance?])
   (:require
-   [simple-stackless-lisp.util :as u]
+   [clojure.core :as core]
    [clojure.string :as str]
-   [clojure.core :as core])
+   [simple-stackless-lisp.util :as u])
   (:import
-   (clojure.lang IPersistentMap PersistentVector)))
+   (clojure.lang Atom IPersistentMap PersistentVector)))
 
 (set! *warn-on-reflection* true)
 
 ;; Types
 ;; =====
-(defn typed-map? [m]
-  (and (map? m)
-       (contains? m :type)))
+(defn atom? [obj]
+  (core/instance? Atom obj))
+
+(defn typed-map? [obj]
+  (and (map? obj)
+       (contains? obj :type)))
 
 (defn multimethod? [obj]
   (and (fn? obj)
@@ -27,6 +30,7 @@
     (symbol?      obj) 'Symbol
     (keyword?     obj) 'Keyword
     (vector?      obj) 'Vector
+    (atom?        obj) 'Atom
     (multimethod? obj) 'MultiMethod
     (fn?          obj) 'Fn
     (typed-map?   obj) (:type obj)
@@ -298,3 +302,23 @@
   (->> chars
        (map char->java-string)
        (str/join)))
+
+
+;; Atoms
+;; =====
+;; backed by Clojure's Atoms
+(defn atom-deref
+  [^Atom a]
+  @a)
+
+(defn atom-set!
+  [^Atom a x]
+  (reset! a x))
+
+(defn atom-cas!
+  [^Atom a oldval newval]
+  (compare-and-set! a oldval newval))
+
+(defn k-atom-swap!
+  [k ^Atom a k-f]
+  (k (swap! a (partial k-f identity))))

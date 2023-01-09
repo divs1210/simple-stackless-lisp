@@ -175,6 +175,15 @@
                         items-str
                         (t/java-string->string "}")])))))
 
+(k-method
+ identity k-to-string 'Atom
+ (fn [k a]
+   (k (t/java-string->string
+       (str "#Atom["
+            (t/string->java-string
+             (k-to-string identity @a))
+            "]")))))
+
 (def k-to-readable-string
   (k-multi
    identity (t/java-string->string "->rstr")
@@ -227,3 +236,12 @@
                        [(t/java-string->string "{")
                         items-str
                         (t/java-string->string "}")])))))
+
+(k-method
+ identity k-to-readable-string 'Atom
+ (fn [k a]
+   (k (t/java-string->string
+       (str "#Atom["
+            (t/string->java-string
+             (k-to-readable-string identity @a))
+            "]")))))
