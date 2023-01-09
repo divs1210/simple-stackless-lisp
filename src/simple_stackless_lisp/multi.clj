@@ -6,30 +6,32 @@
 (def ^:private multi-registry
   (atom {}))
 
-(declare k-to-readable-string)
-
-(defn- k-default-method
-  [k name dispatch-val & args]
-  (let [msg (str "No implementation of method: "
-                 (t/string->java-string name)
-                 " found for dispatch-val: "
-                 (t/string->java-string
-                  (k-to-readable-string identity dispatch-val)))]
-    (throw (ex-info
-            msg
-            {:type 'MethodNotFoundError
-             :multi name
-             :dispatch-val dispatch-val
-             :msg msg}))
-    (k nil)))
+(declare k-apply k-to-readable-string)
 
 (defn- make-k-default-method
-  [name]
-  (fn [k dispatch-val & args]
-    (core/apply k-default-method k name dispatch-val args)))
+  [name k-args->dispatch-val]
+  (fn [k & args]
+    (let [dv (k-apply identity k-args->dispatch-val args)
+          msg (str "No implementation of method: "
+                   (t/string->java-string name)
+                   " found for dispatch-val: "
+                   (t/string->java-string
+                    (k-to-readable-string identity dv)))]
+      (throw (ex-info
+              msg
+              {:type 'MethodNotFoundError
+               :multi name
+               :dispatch-val dv
+               :msg msg}))
+      (k nil))))
 
 (def k-apply
-  (let [name (t/java-string->string "apply")
+  (let [name
+        (t/java-string->string "apply")
+
+        k-args->dispatch-val
+        (fn [k & args]
+          (k (t/type (first args))))
 
         implementations
         (atom {})
@@ -37,17 +39,16 @@
         dispatch
         (with-meta
           (fn [with-result & args]
-            (let [dispatch-val (t/type (first args))]
-              (if-let [k-impl (get @implementations dispatch-val)]
-                (core/apply k-impl (cons with-result args))
-                (let [k-default-impl (get @implementations :MultiMethod/default)]
-                  (core/apply k-default-impl with-result dispatch-val args)))))
+            (let [dispatch-val (core/apply k-args->dispatch-val (cons identity args))
+                  k-impl (or (get @implementations dispatch-val)
+                             (get @implementations :MultiMethod/default))]
+              (core/apply k-impl with-result args)))
           {:multimethod? true})]
     (swap! multi-registry assoc
            dispatch {:name name
                      :implementations implementations})
     (swap! implementations assoc
-           :MultiMethod/default (make-k-default-method name))
+           :MultiMethod/default (make-k-default-method name k-args->dispatch-val))
     (swap! implementations assoc
            'Fn (fn [k f args]
                  (core/apply f (cons k args))))
@@ -64,20 +65,16 @@
         dispatch
         (with-meta
           (fn [with-result & args]
-            (k-apply
-             (fn [dispatch-val]
-               (if-let [k-impl (get @implementations dispatch-val)]
-                 (k-apply with-result k-impl args)
-                 (let [k-default-impl (get @implementations :MultiMethod/default)]
-                   (k-apply with-result k-default-impl (cons dispatch-val args)))))
-             k-args->dispatch-val
-             args))
+            (let [dispatch-val (k-apply identity k-args->dispatch-val args)
+                  k-impl (or (get @implementations dispatch-val)
+                             (get @implementations :MultiMethod/default))]
+              (k-apply with-result k-impl args)))
           {:multimethod? true})]
     (swap! multi-registry assoc
            dispatch {:name name
                      :implementations implementations})
     (swap! implementations assoc
-           :MultiMethod/default (make-k-default-method name))
+           :MultiMethod/default (make-k-default-method name k-args->dispatch-val))
     (k dispatch)))
 
 (defn k-method
@@ -121,7 +118,7 @@
 ;; Number, Boolean, Symbol, Keyword
 (k-method
  identity k-to-string :MultiMethod/default
- (fn [k _ obj]
+ (fn [k obj]
    (k (t/java-string->string (str obj)))))
 
 (k-method
@@ -186,7 +183,7 @@
 
 (k-method
  identity k-to-readable-string :MultiMethod/default
- (fn [k _ obj]
+ (fn [k obj]
    (k-to-string k obj)))
 
 (k-method

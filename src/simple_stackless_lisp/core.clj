@@ -61,7 +61,8 @@
         (impl/k-eval this args env k GUARD)
 
         ;; various applications
-        (if (.startsWith (name op) ".")
+        (if (and (symbol? op)
+                 (.startsWith (name op) "."))
           ;; dot notation
           (impl/k-dot-notation this [op args] env k GUARD)
           ;; function / macro call
