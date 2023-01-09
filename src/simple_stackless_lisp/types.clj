@@ -130,8 +130,10 @@
   (count m))
 
 (defn hash-map-get
-  [^IPersistentMap m key not-found]
-  (get m key not-found))
+  ([m key]
+   (hash-map-get m key nil))
+  ([^IPersistentMap m key not-found]
+   (get m key not-found)))
 
 (defn hash-map-put
   [^IPersistentMap m key val]
@@ -150,6 +152,8 @@
   (try
     (vec (keys m))
     (catch Throwable _
+      ;; When .keys is called on buitin types like numbers and vectors.
+      ;; This handling should ideally move to k-dot-notation.
       [])))
 
 
