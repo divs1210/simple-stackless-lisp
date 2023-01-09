@@ -88,6 +88,7 @@
    'hash-map-put    (->cps t/hash-map-put)
    'hash-map-select (->cps t/hash-map-select)
    'hash-map-merge  (->cps t/hash-map-merge)
+   'hash-map-keys   (->cps t/hash-map-keys)
 
    ;; I/O
    ;; ===

@@ -145,6 +145,13 @@
   [^IPersistentMap this ^IPersistentMap that]
   (merge this that))
 
+(defn hash-map-keys
+  [^IPersistentMap m]
+  (try
+    (vec (keys m))
+    (catch Throwable _
+      [])))
+
 
 ;; Unicode Code Points
 ;; ===================
