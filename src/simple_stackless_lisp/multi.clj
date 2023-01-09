@@ -105,16 +105,18 @@
 
 (defn get-method
   [multi dispatch-val]
-  (let [impls (methods multi)]
-    (get impls dispatch-val (:MultiMethod/default impls))))
+  (let [impls (methods multi)
+        default-impl (:MultiMethod/default impls)]
+    (get impls dispatch-val default-impl)))
 
 
 ;; Primitive multimethods
 ;; ======================
 (def k-to-string
-  (k-multi identity (t/java-string->string "->str")
-           (fn [k obj]
-             (k (t/type obj)))))
+  (k-multi
+   identity (t/java-string->string "->str")
+   (fn [k obj]
+     (k (t/type obj)))))
 
 ;; Number, Boolean, Symbol, Keyword
 (k-method
@@ -177,9 +179,10 @@
                         (t/java-string->string "}")])))))
 
 (def k-to-readable-string
-  (k-multi identity (t/java-string->string "->rstr")
-           (fn [k obj]
-             (k (t/type obj)))))
+  (k-multi
+   identity (t/java-string->string "->rstr")
+   (fn [k obj]
+     (k (t/type obj)))))
 
 (k-method
  identity k-to-readable-string :MultiMethod/default

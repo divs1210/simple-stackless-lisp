@@ -130,8 +130,10 @@
   (count m))
 
 (defn hash-map-get
-  [^IPersistentMap m key not-found]
-  (get m key not-found))
+  ([m key]
+   (hash-map-get m key nil))
+  ([^IPersistentMap m key not-found]
+   (get m key not-found)))
 
 (defn hash-map-put
   [^IPersistentMap m key val]
@@ -144,6 +146,26 @@
 (defn hash-map-merge
   [^IPersistentMap this ^IPersistentMap that]
   (merge this that))
+
+(defn hash-map-keys
+  [^IPersistentMap m]
+  (try
+    (vec (keys m))
+    (catch Throwable _
+      ;; Handles cases where .__keys__
+      ;; is called on buitin types
+      ;; like numbers and vectors.
+      [])))
+
+(defn hash-map-contains?
+  [^IPersistentMap m key]
+  (try
+    (contains? m key)
+    (catch Throwable _
+      ;; Handles cases where .__has-key?__
+      ;; is called on buitin types
+      ;; like numbers and vectors.
+      false)))
 
 
 ;; Unicode Code Points

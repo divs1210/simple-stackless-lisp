@@ -4,7 +4,8 @@
    [clojure.walk :refer [postwalk]]
    [simple-stackless-lisp.env :as env]
    [simple-stackless-lisp.multi :as m]
-   [simple-stackless-lisp.util :as u]))
+   [simple-stackless-lisp.util :as u]
+   [simple-stackless-lisp.types :as t]))
 
 (defn k-def
   [walk args env k GUARD]
@@ -96,7 +97,9 @@
                         (swap! stack-depth dec)
                         (print (str/join (repeat @stack-depth "│")))
                         (print "└>")
-                        (prn ret)
+                        (println
+                         (t/string->java-string
+                          (m/k-to-readable-string identity ret)))
                         (t-k ret))
                       GUARD)))]
       (tracing-walk tracing-walk code-exp env k GUARD))))
@@ -107,6 +110,21 @@
             (GUARD with-code [code])
             (walk walk code env k GUARD))]
     (walk walk code-exp env with-code GUARD)))
+
+(defn k-dot-notation
+  [walk [op args] env k GUARD]
+  (let [obj-exp  (first args)
+        key-name (-> op name rest str/join symbol)
+        new-exp (case key-name
+                  __type__     (list 'type obj-exp)
+                  __keys__     (list 'hash-map-keys obj-exp)
+                  __has-key?__ (list 'hash-map-contains? obj-exp (second args))
+                  ;; else
+                  (list 'hash-map-get
+                        obj-exp
+                        (keyword key-name)
+                        nil))]
+    (walk walk new-exp env k GUARD)))
 
 (defn- k-apply-fn
   [walk [f arg-exps] env k GUARD]

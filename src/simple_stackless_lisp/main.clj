@@ -31,7 +31,7 @@
         (print "> ")
         (flush)
         (core/eval (r/read-exp) env k exe)
-        (catch Exception e
+        (catch Throwable e
           (println "Error: " (.getMessage e))
           (println))))))
 
