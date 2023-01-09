@@ -60,8 +60,12 @@
         eval
         (impl/k-eval this args env k GUARD)
 
-        ;; function / macro call
-        (impl/k-apply this [op args] env k GUARD)))
+        ;; various applications
+        (if (.startsWith (name op) ".")
+          ;; dot notation
+          (impl/k-dot-notation this [op args] env k GUARD)
+          ;; function / macro call
+          (impl/k-apply this [op args] env k GUARD))))
 
     :else
     (u/throw+ "Can't evaluate: " exp)))

@@ -108,6 +108,20 @@
             (walk walk code env k GUARD))]
     (walk walk code-exp env with-code GUARD)))
 
+(defn k-dot-notation
+  [walk [op args] env k GUARD]
+  (let [obj-exp  (first args)
+        key-name (-> op name rest str/join symbol)
+        new-exp (case key-name
+                  type (list 'type obj-exp)
+                  keys (list 'hash-map-keys obj-exp)
+                  ;; else
+                  (list 'hash-map-get
+                        obj-exp
+                        (keyword key-name)
+                        nil))]
+    (walk walk new-exp env k GUARD)))
+
 (defn- k-apply-fn
   [walk [f arg-exps] env k GUARD]
   (letfn [(with-args [args]
