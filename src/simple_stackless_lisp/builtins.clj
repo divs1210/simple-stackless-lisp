@@ -81,14 +81,15 @@
 
    ;; Hashmaps
    ;; ========
-   'HashMap         'HashMap
-   'hash-map        (->cps hash-map)
-   'hash-map-size   (->cps t/hash-map-size)
-   'hash-map-get    (->cps t/hash-map-get)
-   'hash-map-put    (->cps t/hash-map-put)
-   'hash-map-select (->cps t/hash-map-select)
-   'hash-map-merge  (->cps t/hash-map-merge)
-   'hash-map-keys   (->cps t/hash-map-keys)
+   'HashMap            'HashMap
+   'hash-map           (->cps hash-map)
+   'hash-map-size      (->cps t/hash-map-size)
+   'hash-map-get       (->cps t/hash-map-get)
+   'hash-map-put       (->cps t/hash-map-put)
+   'hash-map-select    (->cps t/hash-map-select)
+   'hash-map-merge     (->cps t/hash-map-merge)
+   'hash-map-keys      (->cps t/hash-map-keys)
+   'hash-map-contains? (->cps t/hash-map-contains?)
 
    ;; I/O
    ;; ===

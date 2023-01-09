@@ -116,8 +116,9 @@
   (let [obj-exp  (first args)
         key-name (-> op name rest str/join symbol)
         new-exp (case key-name
-                  type (list 'type obj-exp)
-                  keys (list 'hash-map-keys obj-exp)
+                  __type__     (list 'type obj-exp)
+                  __keys__     (list 'hash-map-keys obj-exp)
+                  __has-key?__ (list 'hash-map-contains? obj-exp (second args))
                   ;; else
                   (list 'hash-map-get
                         obj-exp

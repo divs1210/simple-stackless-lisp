@@ -152,9 +152,20 @@
   (try
     (vec (keys m))
     (catch Throwable _
-      ;; When .keys is called on buitin types like numbers and vectors.
-      ;; This handling should ideally move to k-dot-notation.
+      ;; Handles cases where .__keys__
+      ;; is called on buitin types
+      ;; like numbers and vectors.
       [])))
+
+(defn hash-map-contains?
+  [^IPersistentMap m key]
+  (try
+    (contains? m key)
+    (catch Throwable _
+      ;; Handles cases where .__has-key?__
+      ;; is called on buitin types
+      ;; like numbers and vectors.
+      false)))
 
 
 ;; Unicode Code Points
