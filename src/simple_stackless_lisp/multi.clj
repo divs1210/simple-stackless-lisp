@@ -3,9 +3,6 @@
   (:require [clojure.core :as core]
             [simple-stackless-lisp.types :as t]))
 
-(def ^:private multi-registry
-  (atom {}))
-
 (declare k-apply k-to-readable-string)
 
 (defn- make-k-default-method
@@ -43,10 +40,9 @@
                   k-impl (or (get @implementations dispatch-val)
                              (get @implementations :MultiMethod/default))]
               (core/apply k-impl with-result args)))
-          {:multimethod? true})]
-    (swap! multi-registry assoc
-           dispatch {:name name
-                     :implementations implementations})
+          {:multimethod? true
+           :name name
+           :implementations implementations})]
     (swap! implementations assoc
            :MultiMethod/default (make-k-default-method name k-args->dispatch-val))
     (swap! implementations assoc
@@ -69,25 +65,25 @@
                   k-impl (or (get @implementations dispatch-val)
                              (get @implementations :MultiMethod/default))]
               (k-apply with-result k-impl args)))
-          {:multimethod? true})]
-    (swap! multi-registry assoc
-           dispatch {:name name
-                     :implementations implementations})
+          {:multimethod? true
+           :name name
+           :implementations implementations})]
     (swap! implementations assoc
            :MultiMethod/default (make-k-default-method name k-args->dispatch-val))
     (k dispatch)))
 
 (defn k-method
   [k multi dispatch-val k-impl]
-  (let [multi-record (get @multi-registry multi)
+  (let [multi-record (meta multi)
         impls (:implementations multi-record)]
     (swap! impls assoc dispatch-val k-impl)
     (k nil)))
 
 (defn- multi-info
   [multi]
-  (some-> @multi-registry
-          (get multi)
+  (some-> multi
+          meta
+          (dissoc :multimethod?)
           (update :implementations deref)))
 
 (defn- multi-name
@@ -191,9 +187,9 @@
  identity k-to-string 'MultiMethod
  (fn [k m]
    (k (t/string-join (t/string [])
-                     [(t/java-string->string "#MultiMethod[\"")
-                      (multi-name m)
-                      (t/java-string->string "\"]")]))))
+                     [(t/java-string->string "#MultiMethod[")
+                      (k-to-readable-string identity (multi-name m))
+                      (t/java-string->string "]")]))))
 
 (k-method
  identity k-to-string 'Vector
