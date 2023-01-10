@@ -113,12 +113,22 @@
    (fn [k obj]
      (k (t/type obj)))))
 
-(defn hash-map->string
+(def k-to-readable-string
+  (k-multi
+   identity (t/java-string->string "->rstr")
+   (fn [k obj]
+     (k (t/type obj)))))
+
+(defn primitive->string
+  [obj]
+  (t/java-string->string (str obj)))
+
+(defn hash-map->readable-string
   [m]
   (let [item-strs (map (fn [[k v]]
                          (t/string-join (t/java-string->string " ")
-                                        [(k-to-string identity k)
-                                         (k-to-string identity v)]))
+                                        [(k-to-readable-string identity k)
+                                         (k-to-readable-string identity v)]))
                        m)
         items-str (t/string-join (t/java-string->string ", ")
                                  item-strs)]
@@ -127,14 +137,15 @@
                     items-str
                     (t/java-string->string "}")])))
 
-(defn primitive->string
-  [obj]
-  (t/java-string->string (str obj)))
-
 (k-method
  identity k-to-string :MultiMethod/default
  (fn [k obj]
-   (k (hash-map->string obj))))
+   (k (hash-map->readable-string obj))))
+
+(k-method
+ identity k-to-readable-string :MultiMethod/default
+ (fn [k obj]
+   (k-to-string k obj)))
 
 (k-method
  identity k-to-string 'Nil
@@ -180,114 +191,12 @@
  identity k-to-string 'MultiMethod
  (fn [k m]
    (k (t/string-join (t/string [])
-                     [(t/java-string->string "#MultiMethod[")
+                     [(t/java-string->string "#MultiMethod[\"")
                       (multi-name m)
-                      (t/java-string->string "]")]))))
+                      (t/java-string->string "\"]")]))))
 
 (k-method
  identity k-to-string 'Vector
- (fn [k v]
-   (let [item-strs (map #(k-to-string identity %) v)
-         items-str (t/string-join (t/java-string->string ", ")
-                                  item-strs)]
-     (k (t/string-join (t/string [])
-                       [(t/java-string->string "[")
-                        items-str
-                        (t/java-string->string "]")])))))
-
-(k-method
- identity k-to-string 'HashMap
- (fn [k m]
-   (k (hash-map->string m))))
-
-(k-method
- identity k-to-string 'Atom
- (fn [k a]
-   (k (t/java-string->string
-       (str "#Atom["
-            (t/string->java-string
-             (k-to-string identity @a))
-            "]")))))
-
-
-(def k-to-readable-string
-  (k-multi
-   identity (t/java-string->string "->rstr")
-   (fn [k obj]
-     (k (t/type obj)))))
-
-(defn hash-map->rstring
-  [m]
-  (let [item-strs (map (fn [[k v]]
-                         (t/string-join (t/java-string->string " ")
-                                        [(k-to-readable-string identity k)
-                                         (k-to-readable-string identity v)]))
-                       m)
-        items-str (t/string-join (t/java-string->string ", ")
-                                 item-strs)]
-    (t/string-join (t/string [])
-                   [(t/java-string->string "{")
-                    items-str
-                    (t/java-string->string "}")])))
-
-(k-method
- identity k-to-readable-string :MultiMethod/default
- (fn [k m]
-   (k (hash-map->rstring m))))
-
-(k-method
- identity k-to-readable-string 'Nil
- (fn [k n]
-   (k-to-string k n)))
-
-(k-method
- identity k-to-readable-string 'Number
- (fn [k n]
-   (k-to-string k n)))
-
-(k-method
- identity k-to-readable-string 'Boolean
- (fn [k b]
-   (k-to-string k b)))
-
-(k-method
- identity k-to-readable-string 'Symbol
- (fn [k s]
-   (k-to-string k s)))
-
-(k-method
- identity k-to-readable-string 'Keyword
- (fn [k kw]
-   (k-to-string k kw)))
-
-(k-method
- identity k-to-readable-string 'Character
- (fn [k c]
-   (k (t/string-join (t/string [])
-                     [(t/java-string->string "#char \"")
-                      (t/string [c])
-                      (t/java-string->string "\"")]))))
-
-(k-method
- identity k-to-readable-string 'String
- (fn [k s]
-   (k (t/string-join (t/string [])
-                     [(t/java-string->string "\"")
-                      s
-                      (t/java-string->string "\"")]))))
-
-(k-method
- identity k-to-readable-string 'Fn
- (fn [k f]
-   (k-to-string k f)))
-
-(k-method
- identity k-to-readable-string 'MultiMethod
- (fn [k m]
-   (k-to-string k m)))
-
-(k-method
- identity k-to-readable-string 'Vector
  (fn [k v]
    (let [item-strs (map #(k-to-readable-string identity %) v)
          items-str (t/string-join (t/java-string->string ", ")
@@ -298,15 +207,30 @@
                         (t/java-string->string "]")])))))
 
 (k-method
- identity k-to-readable-string 'HashMap
+ identity k-to-string 'HashMap
  (fn [k m]
-   (k (hash-map->rstring m))))
+   (k (hash-map->readable-string m))))
 
 (k-method
- identity k-to-readable-string 'Atom
+ identity k-to-string 'Atom
  (fn [k a]
-   (k (t/java-string->string
-       (str "#Atom["
-            (t/string->java-string
-             (k-to-readable-string identity @a))
-            "]")))))
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "#Atom[")
+                      (k-to-readable-string identity @a)
+                      (t/java-string->string "]")]))))
+
+(k-method
+ identity k-to-readable-string 'Character
+ (fn [k c]
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "#char \"")
+                      (t/string-escape (k-to-string identity c))
+                      (t/java-string->string "\"")]))))
+
+(k-method
+ identity k-to-readable-string 'String
+ (fn [k s]
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "\"")
+                      (t/string-escape s)
+                      (t/java-string->string "\"")]))))

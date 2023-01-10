@@ -303,6 +303,24 @@
        (map char->java-string)
        (str/join)))
 
+(defn java-string-escape
+  [^String s]
+  (-> s
+      (.replace "\\", "\\\\")
+      (.replace "\t", "\\t")
+      (.replace "\b", "\\b")
+      (.replace "\n", "\\n")
+      (.replace "\r", "\\r")
+      (.replace "\f", "\\f")
+      (.replace "\"", "\\\"")))
+
+(defn string-escape
+  [s]
+  (-> s
+      string->java-string
+      java-string-escape
+      java-string->string))
+
 
 ;; Atoms
 ;; =====
