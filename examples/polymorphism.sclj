@@ -1,8 +1,32 @@
-(method apply Vector
+;; implement method `apply` for collection types
+;; so they are functions of their keys
+
+(multi-method apply String
+ (fn [s args]
+   (let [idx (vector-get args 0)]
+     (string-get s idx))))
+
+(multi-method apply Vector
  (fn [v args]
    (let [idx (vector-get args 0)]
      (vector-get v idx))))
 
-(def v (vector 10 20 30))
+(multi-method apply HashMap
+ (fn [m args]
+   (let [key (vector-get args 0)]
+     (hash-map-get m key))))
 
-(println (v 1))
+(def s "hello")
+(println "string " s
+         " has " (s 1)
+         " at idx " 1)
+
+(def v (vector 10 20 30))
+(println "vector " v
+         " has " (v 1)
+         " at idx " 1)
+
+(def m {:a 1 :b 2})
+(println "map " m
+         " has " (m :a)
+         " at key " :a)
