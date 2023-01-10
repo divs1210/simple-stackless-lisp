@@ -91,6 +91,15 @@
    'hash-map-keys      (->cps t/hash-map-keys)
    'hash-map-contains? (->cps t/hash-map-contains?)
 
+   ;; Atoms
+   ;; =====
+   'Atom       'Atom
+   'atom       (->cps atom)
+   'atom-deref (->cps t/atom-deref)
+   'atom-set!  (->cps t/atom-set!)
+   'atom-cas!  (->cps t/atom-cas!)
+   'atom-swap! t/k-atom-swap!
+
    ;; I/O
    ;; ===
    'print   (->cps print)

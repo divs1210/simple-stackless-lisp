@@ -20,17 +20,17 @@
   (println "|Simple Stackless Lisp REPL|")
   (println "============================")
   (let [env (env/fresh-env b/builtins)
-        k   (fn [ret]
-              (env/bind! env '%1 ret)
-              (println "=>"
-                       (t/string->java-string (m/k-to-readable-string identity ret))
-                       "\n"))
         exe (u/executor)]
     (while true
       (try
         (print "> ")
         (flush)
-        (core/eval (r/read-exp) env k exe)
+        (let [ret (core/eval (r/read-exp) env identity exe)]
+          (env/bind! env '%1 ret)
+          (println "=>"
+                   (t/string->java-string
+                    (m/k-to-readable-string identity ret))
+                   "\n"))
         (catch Throwable e
           (println "Error: " (.getMessage e))
           (println))))))
