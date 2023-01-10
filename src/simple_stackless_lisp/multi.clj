@@ -90,11 +90,9 @@
           (get multi)
           (update :implementations deref)))
 
-(defn- multi-display-info
+(defn- multi-name
   [multi]
-  (let [{:keys [name implementations]} (multi-info multi)]
-    {:name name
-     :dispatch-vals (vec (keys implementations))}))
+  (-> multi multi-info :name))
 
 (defn methods
   [multi]
@@ -144,10 +142,10 @@
 (k-method
  identity k-to-string 'MultiMethod
  (fn [k m]
-   (let [info (multi-display-info m)
-         info-str (k-to-string identity info)]
-     (k (t/string-concat (t/java-string->string "#MultiMethod")
-                         info-str)))))
+   (k (t/string-join (t/string [])
+                     [(t/java-string->string "#MultiMethod[")
+                      (multi-name m)
+                      (t/java-string->string "]")]))))
 
 (k-method
  identity k-to-string 'Vector
