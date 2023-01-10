@@ -1,5 +1,7 @@
-;; implement method `apply` for collection types
-;; so they are functions of their keys
+;; implement method `apply`
+;; for collection types
+;; so they are functions
+;; of their keys
 
 (multi-method apply String
  (fn [s args]
