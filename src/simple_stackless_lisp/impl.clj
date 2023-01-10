@@ -114,7 +114,7 @@
 (defn k-dot-notation
   [walk [op args] env k GUARD]
   (let [obj-exp  (first args)
-        key-name (-> op name rest str/join symbol)
+        key-name (-> op str (.substring 1) symbol)
         new-exp (case key-name
                   __keys__     (list 'hash-map-keys obj-exp)
                   __has-key?__ (list 'hash-map-contains? obj-exp (second args))

@@ -28,10 +28,14 @@
    ;; Bootstrapped Functions
    ;; ======================
    'apply      m/k-apply
-   'multi      m/k-multi
-   'method     m/k-method
-   'methods    (->cps m/methods)
-   'get-method (->cps m/get-method)
+
+   ;; MultiMethods
+   ;; ============
+   'multi         m/k-multi
+   'multi-name    (->cps m/multi-name)
+   'multi-method  m/k-multi-method
+   'multi-methods (->cps m/multi-methods)
+   'multi-get     (->cps m/multi-get)
 
    ;; Primitives
    ;; ==========

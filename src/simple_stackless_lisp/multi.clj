@@ -3,9 +3,6 @@
   (:require [clojure.core :as core]
             [simple-stackless-lisp.types :as t]))
 
-(def ^:private multi-registry
-  (atom {}))
-
 (declare k-apply k-to-readable-string)
 
 (defn- make-k-default-method
@@ -43,10 +40,9 @@
                   k-impl (or (get @implementations dispatch-val)
                              (get @implementations :MultiMethod/default))]
               (core/apply k-impl with-result args)))
-          {:multimethod? true})]
-    (swap! multi-registry assoc
-           dispatch {:name name
-                     :implementations implementations})
+          {:multimethod? true
+           :name name
+           :implementations implementations})]
     (swap! implementations assoc
            :MultiMethod/default (make-k-default-method name k-args->dispatch-val))
     (swap! implementations assoc
@@ -69,38 +65,38 @@
                   k-impl (or (get @implementations dispatch-val)
                              (get @implementations :MultiMethod/default))]
               (k-apply with-result k-impl args)))
-          {:multimethod? true})]
-    (swap! multi-registry assoc
-           dispatch {:name name
-                     :implementations implementations})
+          {:multimethod? true
+           :name name
+           :implementations implementations})]
     (swap! implementations assoc
            :MultiMethod/default (make-k-default-method name k-args->dispatch-val))
     (k dispatch)))
 
-(defn k-method
+(defn k-multi-method
   [k multi dispatch-val k-impl]
-  (let [multi-record (get @multi-registry multi)
+  (let [multi-record (meta multi)
         impls (:implementations multi-record)]
     (swap! impls assoc dispatch-val k-impl)
     (k nil)))
 
 (defn- multi-info
   [multi]
-  (some-> @multi-registry
-          (get multi)
+  (some-> multi
+          meta
+          (dissoc :multimethod?)
           (update :implementations deref)))
 
-(defn- multi-name
+(defn multi-name
   [multi]
   (-> multi multi-info :name))
 
-(defn methods
+(defn multi-methods
   [multi]
   (-> multi multi-info :implementations))
 
-(defn get-method
+(defn multi-get
   [multi dispatch-val]
-  (let [impls (methods multi)
+  (let [impls (multi-methods multi)
         default-impl (:MultiMethod/default impls)]
     (get impls dispatch-val default-impl)))
 
@@ -137,65 +133,65 @@
                     items-str
                     (t/java-string->string "}")])))
 
-(k-method
+(k-multi-method
  identity k-to-string :MultiMethod/default
  (fn [k obj]
    (k (hash-map->readable-string obj))))
 
-(k-method
+(k-multi-method
  identity k-to-readable-string :MultiMethod/default
  (fn [k obj]
    (k-to-string k obj)))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Nil
  (fn [k n]
    (k (t/java-string->string "nil"))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Number
  (fn [k n]
    (k (primitive->string n))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Boolean
  (fn [k b]
    (k (primitive->string b))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Symbol
  (fn [k s]
    (k (primitive->string s))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Keyword
  (fn [k kw]
    (k (primitive->string kw))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Character
  (fn [k c]
    (k (t/string [c]))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'String
  (fn [k s]
    (k s)))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Fn
  (fn [k f]
    (k (t/java-string->string "#Fn"))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'MultiMethod
  (fn [k m]
    (k (t/string-join (t/string [])
-                     [(t/java-string->string "#MultiMethod[\"")
-                      (multi-name m)
-                      (t/java-string->string "\"]")]))))
+                     [(t/java-string->string "#MultiMethod[")
+                      (k-to-readable-string identity (multi-name m))
+                      (t/java-string->string "]")]))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Vector
  (fn [k v]
    (let [item-strs (map #(k-to-readable-string identity %) v)
@@ -206,12 +202,12 @@
                         items-str
                         (t/java-string->string "]")])))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'HashMap
  (fn [k m]
    (k (hash-map->readable-string m))))
 
-(k-method
+(k-multi-method
  identity k-to-string 'Atom
  (fn [k a]
    (k (t/string-join (t/string [])
@@ -219,7 +215,7 @@
                       (k-to-readable-string identity @a)
                       (t/java-string->string "]")]))))
 
-(k-method
+(k-multi-method
  identity k-to-readable-string 'Character
  (fn [k c]
    (k (t/string-join (t/string [])
@@ -227,7 +223,7 @@
                       (t/string-escape (k-to-string identity c))
                       (t/java-string->string "\"")]))))
 
-(k-method
+(k-multi-method
  identity k-to-readable-string 'String
  (fn [k s]
    (k (t/string-join (t/string [])

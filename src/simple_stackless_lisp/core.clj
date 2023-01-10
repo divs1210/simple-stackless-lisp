@@ -62,7 +62,7 @@
 
         ;; various applications
         (if (and (symbol? op)
-                 (.startsWith (name op) "."))
+                 (.startsWith (str op) "."))
           ;; dot notation
           (impl/k-dot-notation this [op args] env k GUARD)
           ;; function / macro call
