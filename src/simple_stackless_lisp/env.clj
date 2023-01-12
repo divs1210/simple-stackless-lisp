@@ -1,5 +1,5 @@
 (ns simple-stackless-lisp.env
-  (:require [simple-stackless-lisp.util :refer [->cps throw+]]))
+  (:require [simple-stackless-lisp.util :refer [throw+]]))
 
 (defn lookup
   [env symbol]
@@ -15,8 +15,8 @@
 
 (defn top-level
   [env]
-  (if (::parent env)
-    (recur (::parent env))
+  (if (::parent @env)
+    (recur (::parent @env))
     env))
 
 (defn extend!
@@ -25,8 +25,7 @@
 
 (defn bind!
   [env sym val]
-  (swap! env
-         assoc sym val)
+  (swap! env assoc sym val)
   nil)
 
 (defn fresh-env

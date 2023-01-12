@@ -7,8 +7,6 @@
   (:import
    (clojure.lang Atom IPersistentMap PersistentVector)))
 
-(set! *warn-on-reflection* true)
-
 ;; Types
 ;; =====
 (defn atom? [obj]
